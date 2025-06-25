@@ -1,0 +1,128 @@
+[
+  {
+    "name": "Любой мастер",
+    "role": "",
+    "photo": "static/img/masters/avatar/all.svg",
+    "salon": "BeautyCity Пушкинская"
+  },
+  {
+    "name": "Елизавета Лапина",
+    "role": "Мастер маникюра",
+    "photo": "static/img/masters/avatar/pushkinskaya/1.svg",
+    "salon": "BeautyCity Пушкинская"
+  },
+  {
+    "name": "Анна Сергеева",
+    "role": "Парикмахер",
+    "photo": "static/img/masters/avatar/pushkinskaya/2.svg",
+    "salon": "BeautyCity Пушкинская"
+  },
+  {
+    "name": "Ева Колесова",
+    "role": "Визажист",
+    "photo": "static/img/masters/avatar/pushkinskaya/3.svg",
+    "salon": "BeautyCity Пушкинская"
+  },
+  {
+    "name": "Мария Суворова",
+    "role": "Стилист",
+    "photo": "static/img/masters/avatar/pushkinskaya/4.svg",
+    "salon": "BeautyCity Пушкинская"
+  },
+  {
+    "name": "Мария Максимова",
+    "role": "Визажист",
+    "photo": "static/img/masters/avatar/pushkinskaya/5.svg",
+    "salon": "BeautyCity Пушкинская"
+  },
+  {
+    "name": "Анастасия Сергеева",
+    "role": "Визажист",
+    "photo": "static/img/masters/avatar/pushkinskaya/6.svg",
+    "salon": "BeautyCity Пушкинская"
+  },
+  {
+    "name": "Любой мастер",
+    "role": "",
+    "photo": "static/img/masters/avatar/all.svg",
+    "salon": "BeautyCity Ленина"
+  },
+  {
+    "name": "Дарья Мартынова",
+    "role": "Мастер маникюра",
+    "photo": "static/img/masters/avatar/lenina/1.svg",
+    "salon": "BeautyCity Ленина"
+  },
+  {
+    "name": "Амина Абрамова",
+    "role": "Парикмахер",
+    "photo": "static/img/masters/avatar/lenina/2.svg",
+    "salon": "BeautyCity Ленина"
+  },
+  {
+    "name": "Милана Романова",
+    "role": "Визажист",
+    "photo": "static/img/masters/avatar/lenina/3.svg",
+    "salon": "BeautyCity Ленина"
+  },
+  {
+    "name": "Диана Чернова",
+    "role": "Стилист",
+    "photo": "static/img/masters/avatar/lenina/4.svg",
+    "salon": "BeautyCity Ленина"
+  },
+  {
+    "name": "Полина Лукьянова",
+    "role": "Визажист",
+    "photo": "static/img/masters/avatar/lenina/5.svg",
+    "salon": "BeautyCity Ленина"
+  },
+  {
+    "name": "Вера Дмитриева",
+    "role": "Визажист",
+    "photo": "static/img/masters/avatar/lenina/6.svg",
+    "salon": "BeautyCity Ленина"
+  },
+  {
+    "name": "Любой мастер",
+    "role": "",
+    "photo": "static/img/masters/avatar/all.svg",
+    "salon": "BeautyCity Красная"
+  },
+  {
+    "name": "Зоя Матвеева",
+    "role": "",
+    "photo": "static/img/masters/avatar/krasnaya/1.svg",
+    "salon": "BeautyCity Красная"
+  },
+  {
+    "name": "Мария Родина",
+    "role": "Мастер маникюра",
+    "photo": "static/img/masters/avatar/krasnaya/2.svg",
+    "salon": "BeautyCity Красная"
+  },
+  {
+    "name": "Дарья Попова",
+    "role": "Парикмахер",
+    "photo": "static/img/masters/avatar/krasnaya/3.svg",
+    "salon": "BeautyCity Красная"
+  },
+  {
+    "name": "Ева Семенова",
+    "role": "Визажист",
+    "photo": "static/img/masters/avatar/krasnaya/4.svg",
+    "salon": "BeautyCity Красная"
+  },
+  {
+    "name": "Вера Романова",
+    "role": "Стилист",
+    "photo": "static/img/masters/avatar/krasnaya/5.svg",
+    "salon": "BeautyCity Красная"
+  },
+  {
+    "name": "Валерия Зуева",
+    "role": "Визажист",
+    "photo": "static/img/masters/avatar/krasnaya/6.svg",
+    "salon": "BeautyCity Красная"
+  }
+]
