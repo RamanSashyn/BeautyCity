@@ -5,6 +5,7 @@ class Salon(models.Model):
     name = models.CharField('Название', max_length=150)
     address = models.CharField('Адрес', max_length=150)
     phone_number = models.CharField('Номер телефона', max_length=30)
+    photo = models.ImageField('Фото салона', upload_to='salons/', blank=True, null=True)
 
     class Meta:
         verbose_name = 'Салон'
@@ -19,6 +20,7 @@ class Service(models.Model):
     description = models.TextField('Описание', blank=True)
     base_price = models.DecimalField('Базовая цена', max_digits=8, decimal_places=2)
     duration_minutes = models.PositiveIntegerField('Длительность (мин)')
+    photo = models.ImageField('Фото услуги', upload_to='services/', blank=True, null=True)
 
     class Meta:
         verbose_name = 'Процедура'
