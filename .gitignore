@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Django
+*.log
+*.pot
+*.pyc
+*.pyo
+*.sqlite3
+db.sqlite3
+*.mo
+*.pickle
+*.secret
+*.env
+
+# Environment
+.env
+.env.*
+.venv/
+venv/
+ENV/
+env.bak/
+env/
+
+# VSCode & PyCharm
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# Static files
+staticfiles/
+static_root/
+media/
+media_root/
+
+# Node (если не используешь — удали)
+node_modules/
+
+# Coverage / testing
+.coverage
+.tox/
+.nox/
+coverage.xml
+htmlcov/
+
+# Migrations cache (если нужно)
+*/migrations/__pycache__/
+*/migrations/*.py[cod]
+
+# Other
+*.bak
+*.swp
+*.swo
