@@ -1,3 +1,71 @@
 from django.contrib import admin
+from .models import (
+    Salon, Service, Specialist, Client,
+    PromoCode, Appointment, WorkShift,
+    Payment, ConsentLog
+)
+from django.utils.html import format_html
 
-# Register your models here.
+@admin.register(Salon)
+class SalonAdmin(admin.ModelAdmin):
+    list_display = ('name', 'address', 'phone_number')
+    search_fields = ('name', 'address')
+
+
+@admin.register(Service)
+class ServiceAdmin(admin.ModelAdmin):
+    list_display = ('name', 'base_price', 'duration_minutes')
+    search_fields = ('name',)
+    list_filter = ('duration_minutes',)
+
+
+@admin.register(Specialist)
+class SpecialistAdmin(admin.ModelAdmin):
+    list_display = ('photo_preview', 'name', 'salon')
+    list_filter = ('salon',)
+    search_fields = ('name',)
+
+    readonly_fields = ('photo_preview',)
+
+    def photo_preview(self, obj):
+        if obj.photo:
+            return format_html('<img src="{}" width="50" height="50" style="object-fit: cover; border-radius: 5px;" />', obj.photo.url)
+        return "Нет фото"
+
+    photo_preview.short_description = "Фото"
+
+@admin.register(Client)
+class ClientAdmin(admin.ModelAdmin):
+    list_display = ('id', 'phone', 'name', 'gender', 'birthday')
+    search_fields = ('phone', 'name')
+
+
+@admin.register(PromoCode)
+class PromoCodeAdmin(admin.ModelAdmin):
+    list_display = ('code', 'discount_percent', 'start_date', 'end_date', 'is_active')
+    list_filter = ('is_active', 'start_date', 'end_date')
+
+
+@admin.register(Appointment)
+class AppointmentAdmin(admin.ModelAdmin):
+    list_display = ('client', 'specialist', 'service', 'date_time_start', 'status')
+    list_filter = ('status', 'date_time_start')
+    search_fields = ('client__phone',)
+
+
+@admin.register(WorkShift)
+class WorkShiftAdmin(admin.ModelAdmin):
+    list_display = ('specialist', 'salon', 'date', 'start_time', 'end_time')
+    list_filter = ('date', 'salon')
+
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ('appointment', 'amount', 'payment_status', 'payment_method')
+    list_filter = ('payment_status', 'payment_method')
+
+
+@admin.register(ConsentLog)
+class ConsentLogAdmin(admin.ModelAdmin):
+    list_display = ('client_phone', 'consent_given_at')
+    search_fields = ('client_phone',)

@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Дневной макияж",
+    "price": 1400,
+    "image": "/static/img/services/service1.svg"
+  },
+  {
+    "name": "Маникюр. Классический. Гель",
+    "price": 2000,
+    "image": "/static/img/services/service2.svg"
+  },
+  {
+    "name": "Укладка волос",
+    "price": 1500,
+    "image": "/static/img/services/service3.svg"
+  },
+  {
+    "name": "Укладка волос",
+    "price": 3000,
+    "image": "/static/img/services/service4.svg"
+  },
+  {
+    "name": "Педикюр",
+    "price": 1000,
+    "image": "/static/img/services/service5.svg"
+  },
+  {
+    "name": "Окрашивание волос",
+    "price": 5000,
+    "image": "/static/img/services/service6.svg"
+  }
+]
