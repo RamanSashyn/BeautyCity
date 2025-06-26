@@ -1,30 +1,15 @@
 from django.contrib import admin
+from django.utils.html import format_html
 from .models import (
     Salon, Service, Specialist, Client,
     PromoCode, Appointment, WorkShift,
     Payment, ConsentLog
 )
-from django.utils.html import format_html
 
 @admin.register(Salon)
 class SalonAdmin(admin.ModelAdmin):
-    list_display = ('name', 'address', 'phone_number')
+    list_display = ('photo_preview', 'name', 'address', 'phone_number')
     search_fields = ('name', 'address')
-
-
-@admin.register(Service)
-class ServiceAdmin(admin.ModelAdmin):
-    list_display = ('name', 'base_price', 'duration_minutes')
-    search_fields = ('name',)
-    list_filter = ('duration_minutes',)
-
-
-@admin.register(Specialist)
-class SpecialistAdmin(admin.ModelAdmin):
-    list_display = ('photo_preview', 'name', 'salon')
-    list_filter = ('salon',)
-    search_fields = ('name',)
-
     readonly_fields = ('photo_preview',)
 
     def photo_preview(self, obj):
@@ -33,6 +18,37 @@ class SpecialistAdmin(admin.ModelAdmin):
         return "Нет фото"
 
     photo_preview.short_description = "Фото"
+
+
+@admin.register(Service)
+class ServiceAdmin(admin.ModelAdmin):
+    list_display = ('photo_preview', 'name', 'base_price', 'duration_minutes')
+    search_fields = ('name',)
+    list_filter = ('duration_minutes',)
+    readonly_fields = ('photo_preview',)
+
+    def photo_preview(self, obj):
+        if obj.photo:
+            return format_html('<img src="{}" width="50" height="50" style="object-fit: cover; border-radius: 5px;" />', obj.photo.url)
+        return "Нет фото"
+
+    photo_preview.short_description = "Фото"
+
+
+@admin.register(Specialist)
+class SpecialistAdmin(admin.ModelAdmin):
+    list_display = ('photo_preview', 'name', 'salon')
+    list_filter = ('salon',)
+    search_fields = ('name',)
+    readonly_fields = ('photo_preview',)
+
+    def photo_preview(self, obj):
+        if obj.photo:
+            return format_html('<img src="{}" width="50" height="50" style="object-fit: cover; border-radius: 5px;" />', obj.photo.url)
+        return "Нет фото"
+
+    photo_preview.short_description = "Фото"
+
 
 @admin.register(Client)
 class ClientAdmin(admin.ModelAdmin):
