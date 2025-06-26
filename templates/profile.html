@@ -1,0 +1,25 @@
+{% extends "index.html" %}
+
+{% block content %}
+<div style="padding: 20px; max-width: 400px; margin: auto;">
+  <h2>Личный кабинет</h2>
+  <form method="post">
+    {% csrf_token %}
+    <label>Имя:</label>
+    <input type="text" name="name" value="{{ client.name }}" required><br><br>
+
+    <label>Дата рождения:</label>
+    <input type="date" name="birthday" value="{{ client.birthday|date:'Y-m-d' }}"><br><br>
+
+    <label>Пол:</label>
+    <select name="gender">
+      <option value="">Не выбрано</option>
+      <option value="male" {% if client.gender == "male" %}selected{% endif %}>Мужской</option>
+      <option value="female" {% if client.gender == "female" %}selected{% endif %}>Женский</option>
+    </select><br><br>
+
+    <button type="submit">Сохранить</button>
+    <a href="{% url 'logout' %}" style="margin-left: 20px;">Выйти</a>
+  </form>
+</div>
+{% endblock %}
