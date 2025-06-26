@@ -45,7 +45,9 @@ def extract_salons_from_index(html_path):
     with open(html_path, encoding="utf-8") as f:
         soup = BeautifulSoup(f, "html.parser")
 
+    seen = set()
     salons = []
+
     for card in soup.select(".salons__block"):
         name_tag = card.select_one(".salons__elems_title")
         address_tag = card.select_one(".salons__elems_light")
@@ -54,11 +56,17 @@ def extract_salons_from_index(html_path):
         if not name_tag or not address_tag:
             continue
 
+        name = name_tag.get_text(strip=True)
+        if name in seen:
+            continue
+
+        seen.add(name)
         salons.append({
-            "name": name_tag.get_text(strip=True),
+            "name": name,
             "address": address_tag.get_text(strip=True),
             "image": image_tag["src"] if image_tag else "",
         })
+
     return salons
 
 

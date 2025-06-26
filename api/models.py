@@ -21,6 +21,7 @@ class Service(models.Model):
     base_price = models.DecimalField('Базовая цена', max_digits=8, decimal_places=2)
     duration_minutes = models.PositiveIntegerField('Длительность (мин)')
     photo = models.ImageField('Фото услуги', upload_to='services/', blank=True, null=True)
+    category = models.ForeignKey("Category", verbose_name="Категория", on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
         verbose_name = 'Процедура'
@@ -34,7 +35,7 @@ class Specialist(models.Model):
     name = models.CharField('Имя', max_length=150)
     photo = models.ImageField('Фото', upload_to='specialists/')
     bio = models.TextField('Описание', max_length=700)
-    salon = models.ForeignKey(Salon, verbose_name='Салон красоты', on_delete=models.CASCADE)
+    salons = models.ManyToManyField(Salon, verbose_name='Салоны')
     services = models.ManyToManyField(Service, verbose_name='Услуги')
 
     class Meta:
