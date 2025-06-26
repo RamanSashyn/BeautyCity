@@ -3,7 +3,7 @@ from django.utils.html import format_html
 from .models import (
     Salon, Service, Specialist, Client,
     PromoCode, Appointment, WorkShift,
-    Payment, ConsentLog
+    Payment, ConsentLog, Category
 )
 
 @admin.register(Salon)
@@ -22,9 +22,9 @@ class SalonAdmin(admin.ModelAdmin):
 
 @admin.register(Service)
 class ServiceAdmin(admin.ModelAdmin):
-    list_display = ('photo_preview', 'name', 'base_price', 'duration_minutes')
+    list_display = ('photo_preview', 'name', 'category', 'base_price', 'duration_minutes')
     search_fields = ('name',)
-    list_filter = ('duration_minutes',)
+    list_filter = ('category', 'duration_minutes')
     readonly_fields = ('photo_preview',)
 
     def photo_preview(self, obj):
@@ -37,8 +37,8 @@ class ServiceAdmin(admin.ModelAdmin):
 
 @admin.register(Specialist)
 class SpecialistAdmin(admin.ModelAdmin):
-    list_display = ('photo_preview', 'name', 'salon')
-    list_filter = ('salon',)
+    list_display = ('photo_preview', 'name', 'list_salons')
+    list_filter = ('salons',)
     search_fields = ('name',)
     readonly_fields = ('photo_preview',)
 
@@ -47,7 +47,9 @@ class SpecialistAdmin(admin.ModelAdmin):
             return format_html('<img src="{}" width="50" height="50" style="object-fit: cover; border-radius: 5px;" />', obj.photo.url)
         return "Нет фото"
 
-    photo_preview.short_description = "Фото"
+    def list_salons(self, obj):
+        return ", ".join([s.name for s in obj.salons.all()])
+    list_salons.short_description = "Салоны"
 
 
 @admin.register(Client)
@@ -85,3 +87,8 @@ class PaymentAdmin(admin.ModelAdmin):
 class ConsentLogAdmin(admin.ModelAdmin):
     list_display = ('client_phone', 'consent_given_at')
     search_fields = ('client_phone',)
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name')
+    search_fields = ('name',)

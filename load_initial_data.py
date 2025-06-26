@@ -8,8 +8,7 @@ from django.core.files import File
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "beautycity.settings")
 django.setup()
 
-from api.models import Salon, Service, Specialist
-
+from api.models import Salon, Service, Specialist, Category
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
@@ -41,33 +40,57 @@ def load_salons():
         print(f'✔ {"Создан" if created else "Уже есть"} салон: {salon.name}')
 
 
-def load_services():
-    with open(DATA_DIR / "services.json", encoding="utf-8") as f:
-        services = json.load(f)
+def load_services_with_categories():
+    path = DATA_DIR / "services_by_category.json"
+    if not path.exists():
+        print("⚠ Файл services_by_category.json не найден")
+        return
 
-    for item in services:
-        name = item["name"]
-        price = item["price"]
-        duration = 60
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
 
-        service, created = Service.objects.get_or_create(
-            name=name,
-            defaults={
-                "base_price": price,
-                "description": "",
-                "duration_minutes": duration,
-            }
-        )
+    services_with_photos = {}
+    services_path = DATA_DIR / "services.json"
+    if services_path.exists():
+        with open(services_path, encoding="utf-8") as sf:
+            for item in json.load(sf):
+                services_with_photos[item["name"]] = item.get("image", "")
 
-        image_path = item.get("image", "").replace("/static/", "").lstrip("/")
-        photo_file = STATIC_DIR / image_path
-        if photo_file.exists():
-            with open(photo_file, "rb") as f:
-                service.photo.save(photo_file.name, File(f), save=True)
-        else:
-            print(f"⚠ Нет файла изображения услуги: {photo_file}")
+    for category_name, services in data.items():
+        category, _ = Category.objects.get_or_create(name=category_name)
 
-        print(f'✔ {"Создана" if created else "Уже есть"} услуга: {service.name}')
+        for item in services:
+            name = item["name"]
+            price = item["price"]
+            duration = 60
+
+            service = Service.objects.filter(name=name).first()
+            if not service:
+                service = Service.objects.create(
+                    name=name,
+                    base_price=price,
+                    description="",
+                    duration_minutes=duration,
+                    category=category,
+                )
+                created = True
+            else:
+                service.category = category
+                service.base_price = price
+                service.duration_minutes = duration
+                created = False
+
+            image_path = services_with_photos.get(name, "").replace("/static/", "").lstrip("/")
+            if image_path:
+                photo_file = STATIC_DIR / image_path
+                if photo_file.exists():
+                    with open(photo_file, "rb") as f:
+                        service.photo.save(photo_file.name, File(f), save=True)
+                else:
+                    print(f"⚠ Нет файла изображения услуги: {photo_file}")
+
+            service.save()
+            print(f'✔ {"Создана" if created else "Обновлена"} услуга: {name} → {category_name}')
 
 
 def load_specialists():
@@ -105,7 +128,7 @@ def main():
     print("Импортируем салоны")
     load_salons()
     print("Импортируем услуги")
-    load_services()
+    load_services_with_categories()
     print("Импортируем мастеров")
     load_specialists()
     print("Все данные успешно загружены!")
