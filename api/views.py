@@ -1,7 +1,7 @@
 import re
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Client, Salon, Service
+from .models import Client, Salon, Service, Specialist
 from django.views.decorators.csrf import csrf_exempt
 
 
@@ -16,7 +16,12 @@ def index(request):
 def index_view(request):
     services = Service.objects.exclude(photo='')
     salons = Salon.objects.all()
-    return render(request, "index.html", {"salons": salons, "services": services})
+    specialists = Specialist.objects.exclude(photo='')
+    return render(request, "index.html", {
+        "salons": salons,
+        "services": services,
+        "specialists": specialists,
+    })
 
 
 @csrf_exempt
