@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -185,62 +186,17 @@
 				</div>
 				
 				<div class="row servicesSlider">
+                    {% for service in services %}
 					<div class="col-md-3">
 						<div class="cardBlock services__block">
-							<img src="/static/img/services/service1.svg" alt="service" class="services__block_img">
+							<img src="{{ service.photo.url }}" alt="{{ service.name }}" class="services__block_img">
 							<div class="services__elems">
-								<div class="services__elems_title">Дневной макияж</div>
-								<div class="services__elems_light">1 400 ₽</div>
+								<div class="services__elems_title">{{ service.name }}</div>
+								<div class="services__elems_light">{{ service.base_price|floatformat:0 }} ₽</div>
 							</div>
 						</div>
 					</div>
-					<div class="col-md-3">
-						<div class="cardBlock services__block">
-							<img src="/static/img/services/service2.svg" alt="service" class="services__block_img">
-							<div class="services__elems">
-								<div class="services__elems_title">Маникюр. Классический. Гель</div>
-								<div class="services__elems_light">2 000 ₽</div>
-							</div>
-						</div>
-					</div>
-					<div class="col-md-3">
-						<div class="cardBlock services__block">
-							<img src="/static/img/services/service3.svg" alt="service" class="services__block_img">
-							<div class="services__elems">
-								<div class="services__elems_title">Укладка волос</div>
-								<div class="services__elems_light">1 500 ₽</div>
-							</div>
-						</div>
-					</div>
-					<div class="col-md-3">
-						<div class="cardBlock services__block">
-							<img src="/static/img/services/service4.svg" alt="service" class="services__block_img">
-							<div class="services__elems">
-								<div class="services__elems_title">Укладка волос</div>
-								<div class="services__elems_light">3 000 ₽</div>
-							</div>
-						</div>
-					</div>
-					<div class="col-md-3">
-						<div class="cardBlock services__block">
-							<img src="/static/img/services/service5.svg" alt="service" class="services__block_img">
-							<div class="services__elems">
-								<div class="services__elems_title">Педикюр</div>
-								<div class="services__elems_light">1 000 ₽</div>
-							</div>
-						</div>
-					</div>
-					<div class="col-md-3">
-						<div class="cardBlock services__block">
-							<img src="/static/img/services/service6.svg" alt="service" class="services__block_img">
-							<div class="services__elems">
-								<div class="services__elems_title">Окрашивание волос</div>
-								<div class="services__elems_light">5 000 ₽</div>
-							</div>
-						</div>
-					</div>
-					
-
+                    {% endfor %}
 				</div>
 			</div>
 		</div>
