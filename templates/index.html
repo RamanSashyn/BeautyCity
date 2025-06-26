@@ -145,34 +145,18 @@
 				</div>
 				<div class="title dec">Наши салоны</div>
 				<div class="row salonsSlider">
+                    {% for salon in salons %}
 					<div class="col-6 col-md-4 col-lg-4 col-xl-3">
 						<div class="salons__block">
-							<img src="/static/img/salons/salon1.svg" alt="salon" class="salons__block_img">
+							<img src="{{ salon.photo.url }}" alt="salon" class="salons__block_img">
 							<div class="salons__elems">
-								<div class="block__title salons__elems_title">BeautyCity Пушкинская</div>
-								<div class="salons__elems_light">ул. Пушкинская, д. 78А</div>
+								<div class="block__title salons__elems_title">{{ salon.name }}</div>
+								<div class="salons__elems_light">{{ salon.address }}</div>
 							</div>
 						</div>
 					</div>
-					<div class="col-6 col-md-4 col-lg-4 col-xl-3">
-						<div class="salons__block">
-							<img src="/static/img/salons/salon2.svg" alt="salon" class="salons__block_img">
-							<div class="salons__elems">
-								<div class="block__title salons__elems_title">BeautyCity Ленина</div>
-								<div class="salons__elems_light">ул. Ленина, д. 211</div>
-							</div>
-						</div>
-					</div>
-					<div class="col-6 col-md-4 col-lg-4 col-xl-3">
-						<div class="salons__block">
-							<img src="/static/img/salons/salon3.svg" alt="salon" class="salons__block_img">
-							<div class="salons__elems">
-								<div class="salons__elems_title">BeautyCity Красная</div>
-								<div class="salons__elems_light">ул. Красная, д. 10</div>
-							</div>
-						</div>
-					</div>
-					<div class="col-6 col-md-4 col-lg-4 col-xl-3 decVis">
+                    {% endfor %}
+                    <div class="col-6 col-md-4 col-lg-4 col-xl-3 decVis">
 						<div class="salons__block">
 							<img src="/static/img/salons/salon1.svg" alt="salon" class="salons__block_img">
 							<div class="salons__elems">
@@ -180,8 +164,7 @@
 								<div class="salons__elems_light">ул. Красная, д. 10</div>
 							</div>
 						</div>
-					</div>
-
+                    </div>
 				</div>
 			</div>
 		</div>
