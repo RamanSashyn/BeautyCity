@@ -374,12 +374,13 @@ $(document).ready(function() {
 
 
 	//popup
-	$('.header__block_auth').click(function(e) {
-		e.preventDefault()
-		$('#authModal').arcticmodal();
-		// $('#confirmModal').arcticmodal();
-
-	})
+	const isLoggedIn = document.body.dataset.isLoggedIn === 'true';
+	$('#authBtn').click(function (e) {
+		if (!isLoggedIn) {
+			e.preventDefault();
+			$('#authModal').arcticmodal();
+		}
+	});
 
 	$('.rewiewPopupOpen').click(function(e) {
 		e.preventDefault()
