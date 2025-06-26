@@ -14,7 +14,7 @@
 	<link rel="stylesheet" href="/static/css/bootstrap-grid.min.css">
 	<link rel="stylesheet" href="/static/css/main.css">
 </head>
-<body>
+<body data-is-logged-in="{% if request.session.client_id %}true{% else %}false{% endif %}">
 	<section id="mobMenu">
 			<div class="mobMenu">
 				<div class="container">
@@ -81,12 +81,17 @@
 						<div class="header__block">
 						<a href="tel:+79179023800"><button class="header__block_btn">Перезвоните мне</button></a>
                     {% if request.session.client_id %}
-                        <div class="header__block_auth">
-							<img src="/static/img/acc.svg" alt="account" class="header__account_img">
-							<span class="header__block_auth__intro">Профиль</span>
-						</div>
+                        <div class="header__block_auth_group">
+                            <a href="{% url 'profile' %}" class="header__block_auth">
+                                <img src="/static/img/acc.svg" alt="account" class="header__account_img">
+                                <span class="header__block_auth__intro">Профиль</span>
+                            </a>
+                            <a href="{% url 'logout' %}" class="header__logout_link">
+                                <span class="header__block_auth__intro">Выйти</span>
+                            </a>
+                        </div>
                     {% else %}
-						<div class="header__block_auth">
+						<div class="header__block_auth" id="authBtn">
 							<img src="/static/img/acc.svg" alt="account" class="header__account_img">
 							<span class="header__block_auth__intro">Войти</span>
 						</div>
@@ -662,8 +667,8 @@
 	<div style="display: none;">
 		<div class="box-modal authPopup popup" id="authModal">
 			<div class="box-modal_close arcticmodal-close"><img src="/static/img/x.svg" alt="x"></div>
-			<div class="popup__title authPopup__title">Войти по коду</div>
-			<p class="popup__text authPopup__text">Введите свой номер телефона, мы вышлем на него код</p>
+			<div class="popup__title authPopup__title">Войти по номеру телефона</div>
+			<p class="popup__text authPopup__text">Введите свой номер телефона, чтобы войти</p>
 			<form action="/api/login/" method="POST" class="authPopup__form">
 				<div class="contacts__form_inputBlock">
 					<input type="text" name="tel" class="contacts__form_iunput" placeholder="+7(999)999--99-99" required="">
