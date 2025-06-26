@@ -80,10 +80,17 @@
 					<div class="col-2 col-md-2 col-lg-3">
 						<div class="header__block">
 						<a href="tel:+79179023800"><button class="header__block_btn">Перезвоните мне</button></a>
+                    {% if request.session.client_id %}
+                        <div class="header__block_auth">
+							<img src="/static/img/acc.svg" alt="account" class="header__account_img">
+							<span class="header__block_auth__intro">Профиль</span>
+						</div>
+                    {% else %}
 						<div class="header__block_auth">
 							<img src="/static/img/acc.svg" alt="account" class="header__account_img">
 							<span class="header__block_auth__intro">Войти</span>
 						</div>
+                    {% endif %}
 					</div>
 					</div>
 				</div>
@@ -657,7 +664,7 @@
 			<div class="box-modal_close arcticmodal-close"><img src="/static/img/x.svg" alt="x"></div>
 			<div class="popup__title authPopup__title">Войти по коду</div>
 			<p class="popup__text authPopup__text">Введите свой номер телефона, мы вышлем на него код</p>
-			<form action="#" class="authPopup__form">
+			<form action="/api/login/" method="POST" class="authPopup__form">
 				<div class="contacts__form_inputBlock">
 					<input type="text" name="tel" class="contacts__form_iunput" placeholder="+7(999)999--99-99" required="">
 				</div>
@@ -669,24 +676,7 @@
 			</form>
 		</div>
 	</div>
-	<div style="display: none;">
-		<div class="box-modal confirmPopup popup" id="confirmModal">
-			<div class="box-modal_close arcticmodal-close"><img src="/static/img/x.svg" alt="x"></div>
-			<div class="popup__title confirmPopup__title">Подтвердите номер</div>
-			<p class="popup__text confirmPopup__text">Введите код, полученный по SMS на номер +7 (928) 164 48 60</p>
-			<div class="confirmPopup__number">
-				<input type="text" name="num1" class="tipsPopup__form_inputNum popup__input" placeholder="" required="">
-				<input type="text" name="num2" class="tipsPopup__form_inputNum popup__input" placeholder="" required="">
-				<input type="text" name="num3" class="tipsPopup__form_inputNum popup__input" placeholder="" required="">
-				<input type="text" name="num4" class="tipsPopup__form_inputNum popup__input" placeholder="" required="">
 
-			</div>
-			<div class="confirmPopup__sms">Если SMS не пришло вы можете <a href="#" class="popup__link">запросить код повторно</a></div>
-			<div class="confirmPopup__changeNumber">
-				<a href="#" class="confirmPopup__link popup__link">Изменить номер телефона</a>
-			</div>
-		</div>
-	</div>
 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js" integrity="sha512-aVKKRRi/Q/YV+4mjoKBsE4x3H+BkegoM/em46NNlCqNTmUYADjBbeNefNxYV7giUp0VxICtqdrbqU7iVaeZNXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js" integrity="sha512-XtmMtDEcNz2j7ekrtHvOVR4iwwaD6o/FUJe6+Zq+HgcCsk3kj4uSQQR8weQ2QVj1o0Pk6PwYLohm206ZzNfubg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
