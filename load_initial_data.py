@@ -28,6 +28,16 @@ def load_salons():
                 "phone_number": "+7 (000) 000-00-00"
             }
         )
+
+        image_path = item.get("image", "").replace("/static/", "").lstrip("/")
+        photo_file = STATIC_DIR / image_path
+
+        if photo_file.exists():
+            with open(photo_file, "rb") as f:
+                salon.photo.save(photo_file.name, File(f), save=True)
+        else:
+            print(f"⚠ Нет файла изображения салона: {photo_file}")
+
         print(f'✔ {"Создан" if created else "Уже есть"} салон: {salon.name}')
 
 
@@ -38,7 +48,6 @@ def load_services():
     for item in services:
         name = item["name"]
         price = item["price"]
-        image_path = item.get("image", "").lstrip("/")
         duration = 60
 
         service, created = Service.objects.get_or_create(
@@ -49,7 +58,16 @@ def load_services():
                 "duration_minutes": duration,
             }
         )
-        print(f'✔ {"Создана" if created else "Уже есть"} услуга: {name}')
+
+        image_path = item.get("image", "").replace("/static/", "").lstrip("/")
+        photo_file = STATIC_DIR / image_path
+        if photo_file.exists():
+            with open(photo_file, "rb") as f:
+                service.photo.save(photo_file.name, File(f), save=True)
+        else:
+            print(f"⚠ Нет файла изображения услуги: {photo_file}")
+
+        print(f'✔ {"Создана" if created else "Уже есть"} услуга: {service.name}')
 
 
 def load_specialists():
@@ -78,7 +96,7 @@ def load_specialists():
             with open(photo_file, "rb") as f:
                 specialist.photo.save(photo_file.name, File(f), save=True)
         else:
-            print(f"⚠ Нет файла фото: {photo_file}")
+            print(f"⚠ Нет файла фото специалиста: {photo_file}")
 
         print(f'✔ {"Создан" if created else "Уже есть"} специалист: {specialist.name}')
 

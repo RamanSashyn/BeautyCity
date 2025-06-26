@@ -13,10 +13,5 @@
     "name": "BeautyCity Красная",
     "address": "ул. Красная, д. 10",
     "image": "/static/img/salons/salon3.svg"
-  },
-  {
-    "name": "BeautyCity Красная",
-    "address": "ул. Красная, д. 10",
-    "image": "/static/img/salons/salon1.svg"
   }
 ]
