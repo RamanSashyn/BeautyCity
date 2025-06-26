@@ -1,3 +1,4 @@
+import re
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Client
@@ -16,8 +17,10 @@ def index(request):
 def login_view(request):
     if request.method == "POST":
         phone = request.POST.get("tel")
-        if not phone:
-            return redirect("/")
+        if not is_valid_phone(phone):
+            return render(request, "index.html", {
+                "phone_error": "Введите корректный номер телефона в формате +7XXXXXXXXXX"
+            })
 
         client, created = Client.objects.get_or_create(phone=phone)
         request.session["client_id"] = client.id
@@ -46,3 +49,8 @@ def profile_view(request):
 def logout_view(request):
     request.session.flush()
     return redirect("/")
+
+
+def is_valid_phone(phone):
+    pattern = r'^\+7\d{10}$'
+    return re.match(pattern, phone)
