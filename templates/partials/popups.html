@@ -9,6 +9,9 @@
         <form action="/api/login/" method="POST" class="authPopup__form">
             <div class="contacts__form_inputBlock">
                 <input type="text" name="tel" class="contacts__form_iunput" placeholder="+7(999)999--99-99" required>
+                {% if phone_error %}
+                <p style="color: red; font-size: 12px; margin-top: 4px;">{{ phone_error }}</p>
+                {% endif %}
             </div>
             <div class="contacts__form_checkboxBlock fic">
                 <input type="checkbox" class="contacts__form_checkbox" checked>
