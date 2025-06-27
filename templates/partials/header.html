@@ -1,0 +1,43 @@
+{% load static %}
+<header id="header">
+    <div class="container">
+        <div class="header">
+            <div class="row">
+                <div class="col-2 col-md-2 mob">
+                    <img src="{% static 'img/hamburger.svg' %}" alt="hamburger" class="header__mobMenu">
+                </div>
+                <div class="col-5 col-md-3 col-lg-2">
+                    <a href="/"><img src="{% static 'img/Logo.svg' %}" alt="Logo" class="logo header__logo"></a>
+                </div>
+                <div class="col-md-5 ">
+                    <nav>
+                        <ul class="menu">
+                            <li class="menu__item"><a href="#" class="menu__item_link">Мастера</a></li>
+                            <li class="menu__item"><a href="#" class="menu__item_link">Услуги</a></li>
+                            <li class="menu__item"><a href="#" class="menu__item_link">Отзывы</a></li>
+                            <li class="menu__item"><a href="#" class="menu__item_link">Контакты</a></li>
+                        </ul>
+                    </nav>
+                </div>
+                <div class="col-3 col-md-2 col-lg-3">
+                    <div class="header__block">
+                        <a href="tel:+79179023800"><button class="header__block_btn">Перезвоните мне</button></a>
+                    {% if request.session.client_id %}
+                        <div class="header__block_auth_group">
+                            <a href="{% url 'profile' %}" class="header__block_auth">
+                                <img src="/static/img/acc.svg" alt="account" class="header__account_img">
+                                <span class="header__block_auth__intro">Профиль</span>
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="header__block_auth">
+                            <img src="{% static 'img/acc.svg' %}" alt="account" class="header__account_img">
+                            <span class="header__block_auth__intro">Войти</span>
+                        </div>
+                    {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>

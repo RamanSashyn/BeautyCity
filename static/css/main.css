@@ -121,10 +121,25 @@ margin-right: 22px;
 border:  none;
 color: #F6A912;
 }
+.header__block_auth_group {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* обеспечит отступ между "Профиль" и "Выйти" */
+}
+.header__logout_link {
+	display: flex;
+	align-items: center;
+	text-decoration: none;
+	margin-left: 30px;
+    height: 20px;
+	line-height: 127.52%;
+	font-weight: 500;
+}
 .header__block_auth {
 cursor: pointer;
 display: flex;
 align-items: center;
+	text-decoration: none;
 }
 .header__account_img {
 	margin-right: 5px;
@@ -133,8 +148,8 @@ height: 30px;
 }
 .header__block_auth__intro {
 	font-weight: 500;
-font-size: 12px;
-line-height: 127.52%;
+	font-size: 12px;
+	line-height: 127.52%;
 /* or 15px */
 
 
@@ -2029,7 +2044,58 @@ margin-right: 10px;
 .notes__footer .notes__main_pay {
 	display: none;
 }
-
+/* profile */
+.profile__btn {
+  padding: 10px 20px;
+  background-color: #ffc93c;
+  border: none;
+  border-radius: 6px;
+  color: #000;
+  font-weight: 500;
+  font-size: 16px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+}
+.profile__btn:hover {
+  background-color: #ffb800;
+}
+.profile__btn_exit {
+  margin-left: 12px;
+  background-color: #f7f7f7;
+  color: #323232;
+  border: 1px solid #ccc;
+}
+.profile__btn_exit:hover {
+  background-color: #e2e2e2;
+}
+.fic {
+  display: flex;
+  align-items: center;
+}
+.profile__group {
+  margin-bottom: 20px;
+}
+.profile__label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #323232;
+}
+.profile__input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: #fff;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease;
+}
+.profile__input:focus {
+  border-color: #ffc93c;
+  outline: none;
+}
 @media (max-width: 1199.98px) {
 
 }

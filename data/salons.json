@@ -1,0 +1,17 @@
+[
+  {
+    "name": "BeautyCity Пушкинская",
+    "address": "ул. Пушкинская, д. 78А",
+    "image": "/static/img/salons/salon1.svg"
+  },
+  {
+    "name": "BeautyCity Ленина",
+    "address": "ул. Ленина, д. 211",
+    "image": "/static/img/salons/salon2.svg"
+  },
+  {
+    "name": "BeautyCity Красная",
+    "address": "ул. Красная, д. 10",
+    "image": "/static/img/salons/salon3.svg"
+  }
+]

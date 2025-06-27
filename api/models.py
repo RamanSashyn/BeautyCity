@@ -5,6 +5,7 @@ class Salon(models.Model):
     name = models.CharField('Название', max_length=150)
     address = models.CharField('Адрес', max_length=150)
     phone_number = models.CharField('Номер телефона', max_length=30)
+    photo = models.ImageField('Фото салона', upload_to='salons/', blank=True, null=True)
 
     class Meta:
         verbose_name = 'Салон'
@@ -19,6 +20,8 @@ class Service(models.Model):
     description = models.TextField('Описание', blank=True)
     base_price = models.DecimalField('Базовая цена', max_digits=8, decimal_places=2)
     duration_minutes = models.PositiveIntegerField('Длительность (мин)')
+    photo = models.ImageField('Фото услуги', upload_to='services/', blank=True, null=True)
+    category = models.ForeignKey("Category", verbose_name="Категория", on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
         verbose_name = 'Процедура'
@@ -30,10 +33,14 @@ class Service(models.Model):
 
 class Specialist(models.Model):
     name = models.CharField('Имя', max_length=150)
-    photo = models.ImageField('Фото', upload_to='specialists/')
-    bio = models.TextField('Описание', max_length=700)
-    salon = models.ForeignKey(Salon, verbose_name='Салон красоты', on_delete=models.CASCADE)
-    services = models.ManyToManyField(Service, verbose_name='Услуги')
+    photo = models.ImageField('Фото', upload_to='specialists/', blank=True, null=True)
+    bio = models.TextField('Специальность', max_length=700, blank=True)
+    salons = models.ManyToManyField(Salon, verbose_name='Салоны', blank=True)
+    services = models.ManyToManyField(Service, verbose_name='Услуги', blank=True)
+    experience_years = models.PositiveIntegerField('Стаж (лет)', default=0)
+    experience_months = models.PositiveIntegerField('Стаж (мес.)', default=0)
+    reviews_count = models.PositiveIntegerField('Количество отзывов', default=0)
+
 
     class Meta:
         verbose_name = 'Специалист'
@@ -164,3 +171,5 @@ class TimeSlot(models.Model):
 
     def __str__(self):
         return f'{self.date} {self.time} ({self.specialist})'
+
+

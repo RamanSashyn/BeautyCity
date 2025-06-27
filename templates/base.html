@@ -1,0 +1,37 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Beauty City{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css"
+        crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css"
+        crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'css/jquery.arcticmodal-0.3.css' %}">
+    <link rel="stylesheet" href="{% static 'css/simple.css' %}">
+    <link rel="stylesheet" href="{% static 'css/bootstrap-grid.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/air-datepicker.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    {% block css %}{% endblock %}
+</head>
+
+<body class="{% block body_class %}{% endblock %}" data-is-logged-in="{% if request.session.client_id %}true{% else %}false{% endif %}">
+    {% include "partials/mob_menu.html" %}
+    {% include "partials/header.html" %}
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    {% include "partials/footer.html" %}
+    {% block popups %}{% include "partials/popups.html" %}{% endblock %}
+    {% include "partials/scripts.html" %}
+    {% block js %}{% endblock %}
+</body>
+
+</html>
