@@ -159,12 +159,13 @@ $(document).ready(function () {
 	updateCombinations();
 
 	const isLoggedIn = document.body.dataset.isLoggedIn === 'true';
-	$('#authBtn').click(function (e) {
+	$('.header__block_auth').click(function (e) {
 		if (!isLoggedIn) {
 			e.preventDefault();
 			$('#authModal').arcticmodal();
 		}
 	});
+
 	$('.rewiewPopupOpen').click(e => { e.preventDefault(); $('#reviewModal').arcticmodal(); });
 	$('.payPopupOpen').click(e => { e.preventDefault(); $('#paymentModal').arcticmodal(); });
 	$('.tipsPopupOpen').click(e => { e.preventDefault(); $('#tipsModal').arcticmodal(); });
