@@ -185,7 +185,7 @@ $(document).ready(function () {
 	$('.rewiewPopupOpen').click(e => { e.preventDefault(); $('#reviewModal').arcticmodal(); });
 	$('.payPopupOpen').click(e => { e.preventDefault(); $('#paymentModal').arcticmodal(); });
 	$('.tipsPopupOpen').click(e => { e.preventDefault(); $('#tipsModal').arcticmodal(); });
-	$('.authPopup__form').submit(() => { $('#confirmModal').arcticmodal(); return false; });
+	$('.authPopup__form').submit(() => { $('#confirmModal').arcticmodal(); return true; });
 
 	$(document).on('click', '.time__items .time__elems_btn', function (e) {
 		e.preventDefault();
