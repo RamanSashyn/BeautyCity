@@ -137,8 +137,6 @@ class ConsentLog(models.Model):
     def __str__(self):
         return self.client_phone
 
-<<<<<<< Updated upstream
-=======
 
 class Category(models.Model):
     name = models.CharField('Категория', max_length=100)
@@ -166,4 +164,3 @@ class TimeSlot(models.Model):
 
     def __str__(self):
         return f'{self.date} {self.time} ({self.specialist})'
->>>>>>> Stashed changes
