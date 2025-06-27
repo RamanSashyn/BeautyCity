@@ -4,7 +4,7 @@ from django.utils.html import format_html
 from .models import (
     Salon, Service, Specialist, Client,
     PromoCode, Appointment, WorkShift,
-    Payment, ConsentLog, Category
+    Payment, ConsentLog, Category, TimeSlot
 )
 
 @admin.register(Salon)
@@ -114,3 +114,10 @@ class ConsentLogAdmin(admin.ModelAdmin):
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
     search_fields = ('name',)
+
+@admin.register(TimeSlot)
+class TimeSlotAdmin(admin.ModelAdmin):
+    list_display = ('date', 'time', 'specialist', 'salon', 'is_booked')
+    list_filter = ('date', 'salon', 'specialist', 'is_booked')
+    search_fields = ('specialist__name', 'salon__name')
+    ordering = ('date', 'time')
