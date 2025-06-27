@@ -10,8 +10,10 @@
 			<div class="row">
 				<div class="col-md-10 col-lg-7 col-xl-6">
 					<div class="banner__block">
-						<h1 class="banner__title">Запишись на первую услугу со <span
-								class="yellow banner__title_discount">скидкой 50%</span></h1>
+						<h1 class="banner__title">
+							Запишись на первую услугу со
+							<span class="yellow banner__title_discount">скидкой 50%</span>
+						</h1>
 						<div class="banner__elems">
 							<img src="{% static 'img/persons.svg' %}" alt="persons" class="banner__elems_img">
 							<p class="banner__elems_intro">
@@ -36,52 +38,25 @@
 			<div class="salons__slider_arrows fic mob">
 				<div class="title">Наши салоны</div>
 				<div class="slider__arrows fic">
-					<div class="slider__arrows_arrow leftArrow">
-						<i class="arrowRight"></i>
-					</div>
-					<div class="slider__arrows_arrow rightArrow">
-						<i class="arrowLleft"></i>
-					</div>
+					<div class="slider__arrows_arrow leftArrow"><i class="arrowRight"></i></div>
+					<div class="slider__arrows_arrow rightArrow"><i class="arrowLleft"></i></div>
 				</div>
 			</div>
 			<div class="title dec">Наши салоны</div>
 			<div class="row salonsSlider">
+				{% for salon in salons %}
 				<div class="col-6 col-md-4 col-lg-4 col-xl-3">
 					<div class="salons__block">
-						<img src="{% static 'img/salons/salon1.svg' %}" alt="salon" class="salons__block_img">
+						{% if salon.photo %}
+						<img src="{{ salon.photo.url }}" alt="salon" class="salons__block_img">
+						{% endif %}
 						<div class="salons__elems">
-							<div class="block__title salons__elems_title">BeautyCity Пушкинская</div>
-							<div class="salons__elems_light">ул. Пушкинская, д. 78А</div>
+							<div class="block__title salons__elems_title">{{ salon.name }}</div>
+							<div class="salons__elems_light">{{ salon.address }}</div>
 						</div>
 					</div>
 				</div>
-				<div class="col-6 col-md-4 col-lg-4 col-xl-3">
-					<div class="salons__block">
-						<img src="{% static 'img/salons/salon2.svg' %}" alt="salon" class="salons__block_img">
-						<div class="salons__elems">
-							<div class="block__title salons__elems_title">BeautyCity Ленина</div>
-							<div class="salons__elems_light">ул. Ленина, д. 211</div>
-						</div>
-					</div>
-				</div>
-				<div class="col-6 col-md-4 col-lg-4 col-xl-3">
-					<div class="salons__block">
-						<img src="{% static 'img/salons/salon3.svg' %}" alt="salon" class="salons__block_img">
-						<div class="salons__elems">
-							<div class="salons__elems_title">BeautyCity Красная</div>
-							<div class="salons__elems_light">ул. Красная, д. 10</div>
-						</div>
-					</div>
-				</div>
-				<div class="col-6 col-md-4 col-lg-4 col-xl-3 decVis">
-					<div class="salons__block">
-						<img src="{% static 'img/salons/salon1.svg' %}" alt="salon" class="salons__block_img">
-						<div class="salons__elems">
-							<div class="salons__elems_title">BeautyCity Красная</div>
-							<div class="salons__elems_light">ул. Красная, д. 10</div>
-						</div>
-					</div>
-				</div>
+				{% endfor %}
 			</div>
 		</div>
 	</div>
@@ -93,69 +68,24 @@
 			<div class="services__slider_arrows fic">
 				<div class="title">Услуги</div>
 				<div class="slider__arrows fic">
-					<div class="slider__arrows_arrow leftArrow">
-						<i class="arrowRight"></i>
-					</div>
-					<div class="slider__arrows_arrow rightArrow">
-						<i class="arrowLleft"></i>
-					</div>
+					<div class="slider__arrows_arrow leftArrow"><i class="arrowRight"></i></div>
+					<div class="slider__arrows_arrow rightArrow"><i class="arrowLleft"></i></div>
 				</div>
 			</div>
 			<div class="row servicesSlider">
+				{% for service in services %}
 				<div class="col-md-3">
 					<div class="cardBlock services__block">
-						<img src="{% static 'img/services/service1.svg' %}" alt="service" class="services__block_img">
+						{% if service.photo %}
+						<img src="{{ service.photo.url }}" alt="{{ service.name }}" class="services__block_img">
+						{% endif %}
 						<div class="services__elems">
-							<div class="services__elems_title">Дневной макияж</div>
-							<div class="services__elems_light">1 400 ₽</div>
+							<div class="services__elems_title">{{ service.name }}</div>
+							<div class="services__elems_light">{{ service.base_price|floatformat:0 }} ₽</div>
 						</div>
 					</div>
 				</div>
-				<div class="col-md-3">
-					<div class="cardBlock services__block">
-						<img src="{% static 'img/services/service2.svg' %}" alt="service" class="services__block_img">
-						<div class="services__elems">
-							<div class="services__elems_title">Маникюр. Классический. Гель</div>
-							<div class="services__elems_light">2 000 ₽</div>
-						</div>
-					</div>
-				</div>
-				<div class="col-md-3">
-					<div class="cardBlock services__block">
-						<img src="{% static 'img/services/service3.svg' %}" alt="service" class="services__block_img">
-						<div class="services__elems">
-							<div class="services__elems_title">Укладка волос</div>
-							<div class="services__elems_light">1 500 ₽</div>
-						</div>
-					</div>
-				</div>
-				<div class="col-md-3">
-					<div class="cardBlock services__block">
-						<img src="{% static 'img/services/service4.svg' %}" alt="service" class="services__block_img">
-						<div class="services__elems">
-							<div class="services__elems_title">Укладка волос</div>
-							<div class="services__elems_light">3 000 ₽</div>
-						</div>
-					</div>
-				</div>
-				<div class="col-md-3">
-					<div class="cardBlock services__block">
-						<img src="{% static 'img/services/service5.svg' %}" alt="service" class="services__block_img">
-						<div class="services__elems">
-							<div class="services__elems_title">Педикюр</div>
-							<div class="services__elems_light">1 000 ₽</div>
-						</div>
-					</div>
-				</div>
-				<div class="col-md-3">
-					<div class="cardBlock services__block">
-						<img src="{% static 'img/services/service6.svg' %}" alt="service" class="services__block_img">
-						<div class="services__elems">
-							<div class="services__elems_title">Окрашивание волос</div>
-							<div class="services__elems_light">5 000 ₽</div>
-						</div>
-					</div>
-				</div>
+				{% endfor %}
 			</div>
 		</div>
 	</div>
@@ -172,144 +102,35 @@
 				</div>
 			</div>
 			<div class="row mastersSlider">
+				{% for specialist in specialists %}
 				<div class="col-md-3">
 					<div class="cardBlock masters__block">
 						<div class="masters__header fic">
-							<img src="{% static 'img/masters/master1.svg' %}" alt="master" class="masters__header_img">
+							{% if specialist.photo %}
+							<img src="{{ specialist.photo.url }}" alt="master" class="masters__header_img">
+							{% endif %}
 							<div class="masters__header_elmes">
-								<div class="masters__header_name">Елизавета Лапина</div>
+								<div class="masters__header_name">{{ specialist.name }}</div>
 								<img src="{% static 'img/rating.svg' %}" alt="rating" class="masters__header_rating">
-								<div class="masters__header_reviews">24 отзыва</div>
+								<div class="masters__header_reviews">{{ specialist.reviews_count }} отзывов</div>
 							</div>
 						</div>
 						<div class="masters__main">
 							<div class="masters__main_speciality">СПЕЦИАЛЬНОСТЬ:</div>
-							<div class="masters__main_intro">Мастер маникюра</div>
+							<div class="masters__main_intro">{{ specialist.bio }}</div>
 						</div>
 						<div class="masters__footer fic">
 							<div class="masters__footer_block">
 								<div class="masters__footer_light">СТАЖ РАБОТЫ:</div>
-								<div class="masters__footer_num">3 г. 10 мес.</div>
+								<div class="masters__footer_num">
+									{{ specialist.experience_years }} г. {{ specialist.experience_months }} мес.
+								</div>
 							</div>
 							<button class="masters__footer_btn">Записаться</button>
 						</div>
 					</div>
 				</div>
-				<div class="col-md-3">
-					<div class="cardBlock masters__block">
-						<div class="masters__header fic">
-							<img src="{% static 'img/masters/master2.svg' %}" alt="master" class="masters__header_img">
-							<div class="masters__header_elmes">
-								<div class="masters__header_name">Анастасия Сергеева</div>
-								<img src="{% static 'img/rating.svg' %}" alt="rating" class="masters__header_rating">
-								<div class="masters__header_reviews">96 отзывов</div>
-							</div>
-						</div>
-						<div class="masters__main">
-							<div class="masters__main_speciality">СПЕЦИАЛЬНОСТЬ:</div>
-							<div class="masters__main_intro">Парикмахер</div>
-						</div>
-						<div class="masters__footer fic">
-							<div class="masters__footer_block">
-								<div class="masters__footer_light">СТАЖ РАБОТЫ:</div>
-								<div class="masters__footer_num">4 г. 9 мес.</div>
-							</div>
-							<button class="masters__footer_btn">Записаться</button>
-						</div>
-					</div>
-				</div>
-				<div class="col-md-3">
-					<div class="cardBlock masters__block">
-						<div class="masters__header fic">
-							<img src="{% static 'img/masters/master3.svg' %}" alt="master" class="masters__header_img">
-							<div class="masters__header_elmes">
-								<div class="masters__header_name">Ева Колесова</div>
-								<img src="{% static 'img/rating.svg' %}" alt="rating" class="masters__header_rating">
-								<div class="masters__header_reviews">18 отзывов</div>
-							</div>
-						</div>
-						<div class="masters__main">
-							<div class="masters__main_speciality">СПЕЦИАЛЬНОСТЬ:</div>
-							<div class="masters__main_intro">Визажист</div>
-						</div>
-						<div class="masters__footer fic">
-							<div class="masters__footer_block">
-								<div class="masters__footer_light">СТАЖ РАБОТЫ:</div>
-								<div class="masters__footer_num">1 г. 2 мес.</div>
-							</div>
-							<button class="masters__footer_btn">Записаться</button>
-						</div>
-					</div>
-				</div>
-				<div class="col-md-3">
-					<div class="cardBlock masters__block">
-						<div class="masters__header fic">
-							<img src="{% static 'img/masters/master4.svg' %}" alt="master" class="masters__header_img">
-							<div class="masters__header_elmes">
-								<div class="masters__header_name">Мария Суворова</div>
-								<img src="{% static 'img/rating.svg' %}" alt="rating" class="masters__header_rating">
-								<div class="masters__header_reviews">32 отзыва</div>
-							</div>
-						</div>
-						<div class="masters__main">
-							<div class="masters__main_speciality">СПЕЦИАЛЬНОСТЬ:</div>
-							<div class="masters__main_intro">Стилист</div>
-						</div>
-						<div class="masters__footer fic">
-							<div class="masters__footer_block">
-								<div class="masters__footer_light">СТАЖ РАБОТЫ:</div>
-								<div class="masters__footer_num">1 г. 1 мес.</div>
-							</div>
-							<button class="masters__footer_btn">Записаться</button>
-						</div>
-					</div>
-				</div>
-				<div class="col-md-3">
-					<div class="cardBlock masters__block">
-						<div class="masters__header fic">
-							<img src="{% static 'img/masters/master5.svg' %}" alt="master" class="masters__header_img">
-							<div class="masters__header_elmes">
-								<div class="masters__header_name">Мария Максимова</div>
-								<img src="{% static 'img/rating.svg' %}" alt="rating" class="masters__header_rating">
-								<div class="masters__header_reviews">42 отзыва</div>
-							</div>
-						</div>
-						<div class="masters__main">
-							<div class="masters__main_speciality">СПЕЦИАЛЬНОСТЬ:</div>
-							<div class="masters__main_intro">Стилист</div>
-						</div>
-						<div class="masters__footer fic">
-							<div class="masters__footer_block">
-								<div class="masters__footer_light">СТАЖ РАБОТЫ:</div>
-								<div class="masters__footer_num">3 г. 1 мес.</div>
-							</div>
-							<button class="masters__footer_btn">Записаться</button>
-						</div>
-					</div>
-				</div>
-				<div class="col-md-3">
-					<div class="cardBlock masters__block">
-						<div class="masters__header fic">
-							<img src="{% static 'img/masters/master6.svg' %}" alt="master" class="masters__header_img">
-							<div class="masters__header_elmes">
-								<div class="masters__header_name">Майя Соболева</div>
-								<img src="{% static 'img/rating.svg' %}" alt="rating" class="masters__header_rating">
-								<div class="masters__header_reviews">32 отзыва</div>
-							</div>
-						</div>
-						<div class="masters__main">
-							<div class="masters__main_speciality">СПЕЦИАЛЬНОСТЬ:</div>
-							<div class="masters__main_intro">Визажист</div>
-						</div>
-						<div class="masters__footer fic">
-							<div class="masters__footer_block">
-								<div class="masters__footer_light">СТАЖ РАБОТЫ:</div>
-								<div class="masters__footer_num">1 г. 1 мес.</div>
-							</div>
-							<button class="masters__footer_btn">Записаться</button>
-						</div>
-					</div>
-				</div>
+				{% endfor %}
 			</div>
 		</div>
 	</div>
@@ -355,9 +176,9 @@
 						<div class="reviews__name">Елена В.</div>
 						<img src="{% static 'img/rating.svg' %}" alt="rating" class="reviews__header_rating">
 						<div class="reviews__block_text">
-							Делала процедуру микротоки у мастера Светланы . Светлана внимательная, приветливая,
-							ненавязчивая. Рекомендую и мастера, и процедуру. Еще делала бровки у Татьяны , я в восторге
-							, брови просто идеально сдеданы
+							Делала процедуру микротоки у мастера Светланы. Светлана внимательная, приветливая,
+							ненавязчивая. Рекомендую и мастера, и процедуру. Еще делала бровки у Татьяны, я в восторге,
+							брови просто идеально сделаны.
 						</div>
 						<div class="reviews__block_date">28 октября 2022</div>
 					</div>
@@ -379,7 +200,7 @@
 						<img src="{% static 'img/rating.svg' %}" alt="rating" class="reviews__header_rating">
 						<div class="reviews__block_text">
 							Сегодня прокололи ушки дочке в этом салоне) Остались довольны обслуживанием и персоналом.
-							Девочки очень приветливые и внимательные . Спасибо большое, всё понравилось)
+							Девочки очень приветливые и внимательные. Спасибо большое, всё понравилось)
 						</div>
 						<div class="reviews__block_date">8 октября 2022</div>
 					</div>
@@ -428,39 +249,27 @@
 				</div>
 				<div class="col-md-12 col-lg-3">
 					<div class="contacts__locationBlock">
+						{% for salon in salons %}
 						<div class="contacts__location fic">
 							<img src="{% static 'img/location.svg' %}" alt="location" class="contacts__location_icon">
 							<div class="contacts__location_info">
-								<div class="contacts__location_intro">ул. Пушкинская, д. 78А</div>
+								<div class="contacts__location_intro">{{ salon.address }}</div>
 								<div class="contacts__location_date">с 10:00 до 20:00 без выходных</div>
 							</div>
 						</div>
-						<div class="contacts__location fic">
-							<img src="{% static 'img/location.svg' %}" alt="location" class="contacts__location_icon">
-							<div class="contacts__location_info">
-								<div class="contacts__location_intro">ул. Красная, д. 10</div>
-								<div class="contacts__location_date">с 10:00 до 20:00 без выходных</div>
-							</div>
-						</div>
-						<div class="contacts__location fic">
-							<img src="{% static 'img/location.svg' %}" alt="location" class="contacts__location_icon">
-							<div class="contacts__location_info">
-								<div class="contacts__location_intro">ул. Ленина, д. 211</div>
-								<div class="contacts__location_date">с 10:00 до 20:00 без выходных</div>
-							</div>
-						</div>
+						{% endfor %}
 					</div>
 					<div class="contacts__block">
 						<div class="contacts__social">
 							<div class="contacts__social_title">соц. сети</div>
 							<div class="contacts__social_block fic">
-								<a href=""><img src="{% static 'img/wa.svg' %}" alt="wa"
+								<a href="#"><img src="{% static 'img/wa.svg' %}" alt="wa"
 										class="contacts__social_icon"></a>
-								<a href=""><img src="{% static 'img/vk.svg' %}" alt="vk"
+								<a href="#"><img src="{% static 'img/vk.svg' %}" alt="vk"
 										class="contacts__social_icon"></a>
-								<a href=""><img src="{% static 'img/tg.svg' %}" alt="tg"
+								<a href="#"><img src="{% static 'img/tg.svg' %}" alt="tg"
 										class="contacts__social_icon"></a>
-								<a href=""><img src="{% static 'img/insta.svg' %}" alt="insta"
+								<a href="#"><img src="{% static 'img/insta.svg' %}" alt="insta"
 										class="contacts__social_icon"></a>
 							</div>
 						</div>

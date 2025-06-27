@@ -33,10 +33,14 @@ class Service(models.Model):
 
 class Specialist(models.Model):
     name = models.CharField('Имя', max_length=150)
-    photo = models.ImageField('Фото', upload_to='specialists/')
-    bio = models.TextField('Описание', max_length=700)
-    salons = models.ManyToManyField(Salon, verbose_name='Салоны')
-    services = models.ManyToManyField(Service, verbose_name='Услуги')
+    photo = models.ImageField('Фото', upload_to='specialists/', blank=True, null=True)
+    bio = models.TextField('Специальность', max_length=700, blank=True)
+    salons = models.ManyToManyField(Salon, verbose_name='Салоны', blank=True)
+    services = models.ManyToManyField(Service, verbose_name='Услуги', blank=True)
+    experience_years = models.PositiveIntegerField('Стаж (лет)', default=0)
+    experience_months = models.PositiveIntegerField('Стаж (мес.)', default=0)
+    reviews_count = models.PositiveIntegerField('Количество отзывов', default=0)
+
 
     class Meta:
         verbose_name = 'Специалист'

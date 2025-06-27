@@ -121,10 +121,25 @@ margin-right: 22px;
 border:  none;
 color: #F6A912;
 }
+.header__block_auth_group {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* обеспечит отступ между "Профиль" и "Выйти" */
+}
+.header__logout_link {
+	display: flex;
+	align-items: center;
+	text-decoration: none;
+	margin-left: 30px;
+    height: 20px;
+	line-height: 127.52%;
+	font-weight: 500;
+}
 .header__block_auth {
 cursor: pointer;
 display: flex;
 align-items: center;
+	text-decoration: none;
 }
 .header__account_img {
 	margin-right: 5px;
@@ -133,8 +148,8 @@ height: 30px;
 }
 .header__block_auth__intro {
 	font-weight: 500;
-font-size: 12px;
-line-height: 127.52%;
+	font-size: 12px;
+	line-height: 127.52%;
 /* or 15px */
 
 

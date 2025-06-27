@@ -67,6 +67,7 @@ $(document).ready(function () {
 			updateCombinations();
 		}
 	});
+
 	$(document).on('click', '.service__services > .panel > button.accordion', function (e) {
 		e.preventDefault();
 		var $btn = $(this);
@@ -75,9 +76,9 @@ $(document).ready(function () {
 		$btn.toggleClass('active');
 	});
 
-	var salonBlocks = $('.service__salons   .accordion__block').toArray();
+	var salonBlocks = $('.service__salons .accordion__block').toArray();
 	var serviceItems = $('.service__services .accordion__block_item').toArray();
-	var masterItems = $('.service__masters  .accordion__block_item').toArray();
+	var masterItems = $('.service__masters .accordion__block_item').toArray();
 
 	function bindSelection() {
 		$(document).on('click', '.service__salons .accordion__block', function (e) {
@@ -91,6 +92,7 @@ $(document).ready(function () {
 			$btn.next('.panel').hide();
 			updateCombinations();
 		});
+
 		$(document).on('click', '.service__services .accordion__block_item', function (e) {
 			e.preventDefault();
 			var $item = $(this),
@@ -102,6 +104,7 @@ $(document).ready(function () {
 			$btn.next('.panel').hide();
 			updateCombinations();
 		});
+
 		$(document).on('click', '.service__masters .accordion__block_item', function (e) {
 			e.preventDefault();
 			var $item = $(this),
@@ -116,9 +119,10 @@ $(document).ready(function () {
 	}
 
 	function updateCombinations() {
-		var salonId = $('.service__salons   > button.selected').data('id') || null;
+		var salonId = $('.service__salons > button.selected').data('id') || null;
 		var serviceId = $('.service__services > button.selected').data('id') || null;
-		var specialistId = $('.service__masters  > button.selected').data('id') || null;
+		var specialistId = $('.service__masters > button.selected').data('id') || null;
+
 		$.getJSON('/api/filter/', {
 			salon: salonId,
 			service: serviceId,
@@ -129,19 +133,13 @@ $(document).ready(function () {
 	}
 
 	function applyFilters(data, serviceId) {
-		var allowedSalons = data.salons.map(function (o) { return o.id; });
-		var allowedServices = data.services.map(function (o) { return o.id; });
-		var allowedSpecialists = data.specialists.map(function (o) { return o.id; });
+		var allowedSalons = data.salons.map(o => o.id);
+		var allowedServices = data.services.map(o => o.id);
+		var allowedSpecialists = data.specialists.map(o => o.id);
 
-		salonBlocks.forEach(function (el) {
-			var id = $(el).data('id');
-			$(el)[allowedSalons.includes(id) ? 'show' : 'hide']();
-		});
-
-		serviceItems.forEach(function (el) {
-			var id = $(el).data('id');
-			$(el)[allowedServices.includes(id) ? 'show' : 'hide']();
-		});
+		salonBlocks.forEach(el => $(el)[allowedSalons.includes($(el).data('id')) ? 'show' : 'hide']());
+		serviceItems.forEach(el => $(el)[allowedServices.includes($(el).data('id')) ? 'show' : 'hide']());
+		masterItems.forEach(el => $(el)[allowedSpecialists.includes($(el).data('id')) ? 'show' : 'hide']());
 
 		if (!serviceId) {
 			$('.service__services > .panel > button.accordion').show();
@@ -152,11 +150,6 @@ $(document).ready(function () {
 			});
 		}
 
-		masterItems.forEach(function (el) {
-			var id = $(el).data('id');
-			$(el)[allowedSpecialists.includes(id) ? 'show' : 'hide']();
-		});
-
 		$('.service__services > .panel > button.accordion').filter(function () {
 			return !$(this).text().trim();
 		}).remove();
@@ -165,11 +158,17 @@ $(document).ready(function () {
 	bindSelection();
 	updateCombinations();
 
-	$('.header__block_auth').click(function (e) { e.preventDefault(); $('#authModal').arcticmodal(); });
-	$('.rewiewPopupOpen').click(function (e) { e.preventDefault(); $('#reviewModal').arcticmodal(); });
-	$('.payPopupOpen').click(function (e) { e.preventDefault(); $('#paymentModal').arcticmodal(); });
-	$('.tipsPopupOpen').click(function (e) { e.preventDefault(); $('#tipsModal').arcticmodal(); });
-	$('.authPopup__form').submit(function () { $('#confirmModal').arcticmodal(); return false; });
+	const isLoggedIn = document.body.dataset.isLoggedIn === 'true';
+	$('#authBtn').click(function (e) {
+		if (!isLoggedIn) {
+			e.preventDefault();
+			$('#authModal').arcticmodal();
+		}
+	});
+	$('.rewiewPopupOpen').click(e => { e.preventDefault(); $('#reviewModal').arcticmodal(); });
+	$('.payPopupOpen').click(e => { e.preventDefault(); $('#paymentModal').arcticmodal(); });
+	$('.tipsPopupOpen').click(e => { e.preventDefault(); $('#tipsModal').arcticmodal(); });
+	$('.authPopup__form').submit(() => { $('#confirmModal').arcticmodal(); return false; });
 
 	$(document).on('click', '.time__items .time__elems_btn', function (e) {
 		e.preventDefault();
@@ -181,5 +180,4 @@ $(document).ready(function () {
 			$('.time__btns_next').addClass('active');
 		}
 	});
-
 });
