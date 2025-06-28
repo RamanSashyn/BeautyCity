@@ -276,34 +276,42 @@ btn
 	opacity: 0.3;
 }
 
-.salons__slider_arrows {}
+.salons__slider_arrows {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+	margin-bottom: 20px;
+}
 
 .salonsSliderMob {
 	display: none;
 }
 
-/*End salons*/
-
-.salons__block_img,
-.services__block_img,
-.masters__header_img {
+#salons .salonsSlider .salons__block_img,
+#services .servicesSlider .services__block_img,
+#masters .mastersSlider .masters__header_img {
 	width: 100%;
-	/* занять всю ширину родителя */
 	height: 200px;
-	/* фиксированная высота — подстройте под свою вёрстку */
 	object-fit: cover;
-	/* обрезает изображение, сохраняя пропорции */
 	object-position: center;
 	display: block;
-	/* убирает лишние отступы снизу */
 }
 
-/* опционально: соотношение сторон */
-.salons__block_img {
+#salons .salonsSlider .salons__block_img {
 	aspect-ratio: 4 / 3;
 }
 
-/* services*/
+#masters .mastersSlider .masters__header_img {
+	width: 100px;
+	height: 100px;
+	object-fit: cover;
+	object-position: center;
+	border-radius: 50%;
+	display: block;
+	margin: 0 auto;
+}
+
 .services .col-md-3 {
 	padding-left: 10px;
 	padding-right: 10px;
@@ -318,10 +326,8 @@ btn
 	font-weight: 500;
 	font-size: 14px;
 	line-height: 127.52%;
-	/* or 18px */
 
 	margin-top: 11px;
-	/* черный */
 	margin-bottom: 17px;
 	color: #323232;
 }
@@ -330,7 +336,6 @@ btn
 	font-weight: 600;
 	font-size: 18px;
 	line-height: 127.52%;
-	/* or 23px */
 
 
 	color: #F6A912;
@@ -380,8 +385,6 @@ btn
 	-webkit-transform: rotate(135deg);
 }
 
-/*End services*/
-/* masters*/
 .masters .col-md-3 {
 	padding-left: 10px;
 	padding-right: 10px;
@@ -393,7 +396,6 @@ btn
 
 .masters__block {
 	background: #FFFFFF;
-	/* тень */
 
 	box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.02);
 	border-radius: 10px;
@@ -412,10 +414,8 @@ btn
 	font-weight: 500;
 	font-size: 18px;
 	line-height: 127.52%;
-	/* or 23px */
 
 
-	/* черный */
 	margin-bottom: 8px;
 	color: #323232;
 }
@@ -428,7 +428,6 @@ btn
 	font-weight: 600;
 	font-size: 10px;
 	line-height: 127.52%;
-	/* identical to box height, or 13px */
 
 
 	color: #000000;
@@ -444,7 +443,6 @@ btn
 	font-weight: 700;
 	font-size: 8px;
 	line-height: 127.52%;
-	/* or 10px */
 
 
 	color: rgba(50, 50, 50, 0.3);
@@ -454,10 +452,8 @@ btn
 	font-weight: 600;
 	font-size: 14px;
 	line-height: 127.52%;
-	/* or 18px */
 
 
-	/* черный */
 	margin-bottom: 18px;
 	color: #323232;
 }
@@ -466,7 +462,6 @@ btn
 	font-weight: 700;
 	font-size: 8px;
 	line-height: 127.52%;
-	/* or 10px */
 
 
 	color: rgba(50, 50, 50, 0.3);
@@ -475,10 +470,8 @@ btn
 .masters__footer_num {
 	font-size: 12px;
 	line-height: 127.52%;
-	/* or 15px */
 
 
-	/* черный */
 
 	color: #323232;
 }
@@ -491,7 +484,6 @@ btn
 	width: 109px;
 	height: 35px;
 
-	/* дополнительный */
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -500,10 +492,8 @@ btn
 	font-weight: 600;
 	font-size: 12px;
 	line-height: 127.52%;
-	/* or 15px */
 
 
-	/* основной 2 */
 	border: none;
 	color: #F6A912;
 }
@@ -512,8 +502,6 @@ btn
 	background: #F5EED4;
 }
 
-/*End masters*/
-/* reviews*/
 .reviews .col-md-3 {
 	padding-left: 10px;
 	padding-right: 10px;
@@ -525,7 +513,6 @@ btn
 
 .reviews__block {
 	background: #FFFFFF;
-	/* тень */
 
 	box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.02);
 	border-radius: 10px;
@@ -538,10 +525,8 @@ btn
 	font-weight: 600;
 	font-size: 18px;
 	line-height: 127.52%;
-	/* identical to box height, or 23px */
 
 
-	/* черный */
 	margin-bottom: 3px;
 	color: #323232;
 }
@@ -553,10 +538,8 @@ btn
 .reviews__block_text {
 	font-size: 12px;
 	line-height: 127.52%;
-	/* or 15px */
 
 
-	/* черный */
 
 	color: #323232;
 
@@ -566,11 +549,9 @@ btn
 .reviews__block_date {
 	font-size: 12px;
 	line-height: 127.52%;
-	/* or 15px */
 
 	right: 24px;
 
-	/* черный */
 
 	color: #323232;
 
@@ -579,8 +560,6 @@ btn
 	bottom: 19px;
 }
 
-/*End reviews*/
-/* contacts*/
 .contacts {
 	padding-bottom: 57px;
 }
@@ -1223,7 +1202,6 @@ footer {
 	font-weight: bold;
 	border: 3px solid #F6A912;
 	border-width: 0 1px 1px 0;
-	display: inline-block;
 	padding: 5px;
 	float: right;
 	margin-top: 5px;
@@ -1240,9 +1218,6 @@ footer {
 
 .panel {
 	display: none;
-	!max-height: 0;
-	!overflow: hidden;
-	!transition: max-height 0.2s ease-out;
 }
 
 .panel.active {
@@ -2524,7 +2499,8 @@ btn
 		line-height: 127.52%;
 		/* identical to box height, or 31px */
 
-		margin-bottom: 4px color: #262626;
+		margin-bottom: 4px;
+		color: #262626;
 
 	}
 

@@ -4,6 +4,7 @@
 {% block body_class %}indexPage{% endblock %}
 
 {% block content %}
+
 <section id="banner">
 	<div class="container">
 		<div class="banner">
@@ -35,20 +36,25 @@
 <section id="salons">
 	<div class="container">
 		<div class="salons pb100">
-			<div class="salons__slider_arrows fic mob">
+
+			<div class="salons__slider_arrows fic">
 				<div class="title">Наши салоны</div>
 				<div class="slider__arrows fic">
-					<div class="slider__arrows_arrow leftArrow"><i class="arrowRight"></i></div>
-					<div class="slider__arrows_arrow rightArrow"><i class="arrowLleft"></i></div>
+					<div class="slider__arrows_arrow leftArrow">
+						<i class="arrowRight"></i>
+					</div>
+					<div class="slider__arrows_arrow rightArrow">
+						<i class="arrowLleft"></i>
+					</div>
 				</div>
 			</div>
-			<div class="title dec">Наши салоны</div>
+
 			<div class="row salonsSlider">
 				{% for salon in salons %}
 				<div class="col-6 col-md-4 col-lg-4 col-xl-3">
 					<div class="salons__block">
 						{% if salon.photo %}
-						<img src="{{ salon.photo.url }}" alt="salon" class="salons__block_img">
+						<img src="{{ salon.photo.url }}" alt="{{ salon.name }}" class="salons__block_img">
 						{% endif %}
 						<div class="salons__elems">
 							<div class="block__title salons__elems_title">{{ salon.name }}</div>
@@ -57,17 +63,9 @@
 					</div>
 				</div>
 				{% endfor %}
-                <div class="col-6 col-md-4 col-lg-4 col-xl-3 decVis">
-                    <div class="salons__block">
-                        <img src="/static/img/salons/salon1.svg" alt="salon" class="salons__block_img">
-                        <div class="salons__elems">
-                            <div class="salons__elems_title">BeautyCity Красная</div>
-                            <div class="salons__elems_light">ул. Красная, д. 10</div>
-                        </div>
-                    </div>
-			    </div>
-		    </div>
-        </div>
+			</div>
+
+		</div>
 	</div>
 </section>
 
@@ -116,7 +114,8 @@
 					<div class="cardBlock masters__block">
 						<div class="masters__header fic">
 							{% if specialist.photo %}
-							<img src="{{ specialist.photo.url }}" alt="master" class="masters__header_img">
+							<img src="{{ specialist.photo.url }}" alt="{{ specialist.name }}"
+								class="masters__header_img">
 							{% endif %}
 							<div class="masters__header_elmes">
 								<div class="masters__header_name">{{ specialist.name }}</div>
@@ -251,7 +250,7 @@
 						<div class="contacts__form_checkboxBlock fic">
 							<input type="checkbox" class="contacts__form_checkbox" checked>
 							<span class="contacts__form_checkboxBlock__intro">Я согласен(а) с политикой
-								конфидециоальности</span>
+								конфиденциальности</span>
 						</div>
 						<button type="submit" class="contacts__form_btn">Отправить</button>
 					</form>
@@ -287,7 +286,7 @@
 								<div class="contacts__info_title">контакты</div>
 								<a href="tel:+79179023800" class="contacts__info_tel">+7 (917) 902 38 00</a>
 							</div>
-							<a href="#" class="contacts__info_mail">hello@beauty.ru</a>
+							<a href="mailto:hello@beauty.ru" class="contacts__info_mail">hello@beauty.ru</a>
 						</div>
 					</div>
 				</div>
@@ -301,4 +300,5 @@
 		</div>
 	</div>
 </section>
+
 {% endblock %}
