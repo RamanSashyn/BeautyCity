@@ -198,4 +198,34 @@ $(document).ready(function () {
 			$('.time__btns_next').addClass('active');
 		}
 	});
+
+	$(document).on('click', '.time__btns_next.active', function (e) {
+		e.preventDefault();
+
+		const slotId = $('.time__elems_btn.active').data('slot-id');
+		const salonId = $('.service__salons > button.selected').data('id');
+		const serviceId = $('.service__services > button.selected').data('id');
+		const specialistId = $('.service__masters > button.selected').data('id');
+
+		if (!slotId || !salonId || !serviceId || !specialistId) {
+			alert('Пожалуйста, выберите все поля.');
+			return;
+		}
+
+		const url = '/api/book/';
+
+		$.post(url, {
+			slot_id: slotId,
+			salon_id: salonId,
+			service_id: serviceId,
+			specialist_id: specialistId,
+			csrfmiddlewaretoken: $('[name=csrfmiddlewaretoken]').val()
+		}).done(function (response) {
+			if (response.success && response.redirect_url) {
+				window.location.href = response.redirect_url;
+			} else {
+				alert('Ошибка при записи. Попробуйте снова.');
+			}
+		});
+	});
 });
