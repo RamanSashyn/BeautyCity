@@ -9,39 +9,92 @@
 			<div class="row">
 				<div class="col-md-6 col-lg-6">
 					<div class="breadCrumbs">
-						<a href="#" class="breadCrumbs__item">На главную</a>
+						<a href="/" class="breadCrumbs__item">На главную</a>
 					</div>
 					<div class="service__block">
 						<h1 class="service__title">Запись на услугу</h1>
 					</div>
-					<form action="#" class="serviceFinally__form">
+					<form method="post" class="serviceFinally__form">
+						{% csrf_token %}
 						<div class="serviceFinally__form_block">
 							<div class="serviceFinally__form_header fic">
-								<span class="serviceFinally__form_header__number">Запись №32985</span>
+								<span class="serviceFinally__form_header__number">
+									{% if appointment %}Запись №{{ appointment.id }}{% else %}Предзапись{% endif %}
+								</span>
 								<div class="serviceFinally__form_header__item fic">
-									<div class="serviceFinally__form_header__service">BeautyCity Пушкинская</div>
-									<div class="serviceFinally__form_header__address">ул. Пушкинская, д. 78А</div>
+									<div class="serviceFinally__form_header__service">
+										{% if appointment %}
+										{{ appointment.salon.name }}
+										{% elif salon %}
+										{{ salon.name }}
+										{% endif %}
+									</div>
+									<div class="serviceFinally__form_header__address">
+										{% if appointment %}
+										{{ appointment.salon.address }}
+										{% elif salon %}
+										{{ salon.address }}
+										{% endif %}
+									</div>
 								</div>
 							</div>
 							<div class="serviceFinally__form_content">
 								<div class="serviceFinally__form_content__block fic">
-									<div class="serviceFinally__form_content__title">Дневной макияж</div>
-									<div class="serviceFinally__form_content__price">750 ₽</div>
+									<div class="serviceFinally__form_content__title">
+										{% if appointment %}
+										{{ appointment.service.name }}
+										{% elif service %}
+										{{ service.name }}
+										{% endif %}
+									</div>
+									<div class="serviceFinally__form_content__price">
+										{% if appointment %}
+										{{ appointment.service.base_price|floatformat:0 }}
+										{% elif service %}
+										{{ service.base_price|floatformat:0 }}
+										{% endif %} ₽
+									</div>
 								</div>
 								<div class="serviceFinally__form_content__block fic">
 									<div class="serviceFinally__form_content__items fic">
-										<img src="{% static 'img/masters/avatar/vizajist1.svg' %}" alt="avatar"
+										{% if appointment %}
+										{% if appointment.specialist.photo %}
+										<img src="{{ appointment.specialist.photo.url }}" alt="avatar"
 											class="accordion__block_img">
-										<div class="accordion__block_master">Елена Грибнова</div>
+										{% endif %}
+										<div class="accordion__block_master">{{ appointment.specialist.name }}</div>
+										{% elif specialist %}
+										{% if specialist.photo %}
+										<img src="{{ specialist.photo.url }}" alt="avatar" class="accordion__block_img">
+										{% endif %}
+										<div class="accordion__block_master">{{ specialist.name }}</div>
+										{% endif %}
 									</div>
 									<div class="serviceFinally__form_content__item fic">
-										<div class="serviceFinally__form_content__time">16:30</div>
-										<div class="serviceFinally__form_content__date">18 ноября</div>
+										<div class="serviceFinally__form_content__time">
+											{% if appointment %}
+											{{ appointment.date_time_start|time:"H:i" }}
+											{% elif slot %}
+											{{ slot.time|time:"H:i" }}
+											{% endif %}
+										</div>
+										<div class="serviceFinally__form_content__date">
+											{% if appointment %}
+											{{ appointment.date_time_start|date:"j E" }}
+											{% elif slot %}
+											{{ slot.date|date:"j E" }}
+											{% endif %}
+										</div>
 									</div>
 								</div>
 							</div>
 						</div>
+
+						{% if not appointment %}
 						<div class="serviceFinally__form_itesm">
+							{% if error %}
+							<p style="color: red;">{{ error }}</p>
+							{% endif %}
 							<div class="contacts__form_block fic">
 								<input type="text" name="fname" class="contacts__form_iunput" placeholder="Введите имя"
 									required="">
@@ -51,15 +104,16 @@
 								</div>
 							</div>
 							<textarea name="contactsTextarea" class="contacts__form_textarea"
-								placeholder="Вопрос(необязательно)"></textarea>
+								placeholder="Вопрос (необязательно)"></textarea>
 							<div class="contacts__form_checkboxBlock fic">
 								<input type="checkbox" class="contacts__form_checkbox" checked="">
 								<span class="contacts__form_checkboxBlock__intro">Я согласен(а) с политикой
 									конфидециоальности</span>
 							</div>
 							<button type="submit" class="serviceFinallys__form_btn">Записаться</button>
-							<button type="submit" class="serviceFinallys__form_back">Назад</button>
+							<a href="/" class="serviceFinallys__form_back">На главную</a>
 						</div>
+						{% endif %}
 					</form>
 				</div>
 				<div class="col-md-12 col-lg-5">
@@ -72,39 +126,5 @@
 {% endblock %}
 
 {% block popups %}
-<div style="display: none;">
-	<div class="box-modal authPopup popup" id="authModal">
-		<div class="box-modal_close arcticmodal-close"><img src="{% static 'img/x.svg' %}" alt="x"></div>
-		<div class="popup__title authPopup__title">Войти по коду</div>
-		<p class="popup__text authPopup__text">Введите свой номер телефона, мы вышлем на него код</p>
-		<form action="#" class="authPopup__form">
-			<div class="contacts__form_inputBlock">
-				<input type="text" name="tel" class="contacts__form_iunput" placeholder="+7(999)999--99-99" required="">
-			</div>
-			<div class="contacts__form_checkboxBlock fic">
-				<input type="checkbox" class="contacts__form_checkbox" checked="">
-				<span class="contacts__form_checkboxBlock__intro">Я согласен(а) с политикой конфидециоальности</span>
-			</div>
-			<button type="submit" class="popup__btn authPopup__btn">Отправить</button>
-		</form>
-	</div>
-</div>
-<div style="display: none;">
-	<div class="box-modal confirmPopup popup" id="confirmModal">
-		<div class="box-modal_close arcticmodal-close"><img src="{% static 'img/x.svg' %}" alt="x"></div>
-		<div class="popup__title confirmPopup__title">Подтвердите номер</div>
-		<p class="popup__text confirmPopup__text">Введите код, полученный по SMS на номер +7 (928) 164 48 60</p>
-		<div class="confirmPopup__number">
-			<input type="text" name="num1" class="tipsPopup__form_inputNum popup__input" placeholder="" required="">
-			<input type="text" name="num2" class="tipsPopup__form_inputNum popup__input" placeholder="" required="">
-			<input type="text" name="num3" class="tipsPopup__form_inputNum popup__input" placeholder="" required="">
-			<input type="text" name="num4" class="tipsPopup__form_inputNum popup__input" placeholder="" required="">
-		</div>
-		<div class="confirmPopup__sms">Если SMS не пришло вы можете <a href="#" class="popup__link">запросить код
-				повторно</a></div>
-		<div class="confirmPopup__changeNumber">
-			<a href="#" class="confirmPopup__link popup__link">Изменить номер телефона</a>
-		</div>
-	</div>
-</div>
+{{ block.super }}
 {% endblock %}

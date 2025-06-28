@@ -6,6 +6,9 @@ from .views import (
     profile_view,
     logout_view,
     index_view,
+    service_finally_view,
+    book_appointment,
+    show_appointment,
 )
 
 urlpatterns = [
@@ -14,4 +17,7 @@ urlpatterns = [
     path("login/", login_view, name="login"),
     path("profile/", profile_view, name="profile"),
     path("logout/", logout_view, name="logout"),
+    path('book/', book_appointment, name='book_appointment'),
+    path("service-finally/", service_finally_view, name="service_finally"),
+    path("service-finally/<int:appointment_id>/", show_appointment, name="show_appointment"),
 ]

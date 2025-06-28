@@ -5,17 +5,32 @@ $(document).ready(function () {
 		return !$(this).text().trim();
 	}).remove();
 
-	$('.salonsSlider').slick({
-		arrows: true,
-		slidesToShow: 4,
-		infinite: true,
+	var $salonsSlider = $('.salonsSlider');
+	var salonCount = $salonsSlider.children().length;
+	var salonSlidesToShow = salonCount >= 4 ? 4 : salonCount;
+	$salonsSlider.slick({
+		arrows: salonCount > salonSlidesToShow,
+		slidesToShow: salonSlidesToShow,
+		infinite: salonCount > salonSlidesToShow,
 		prevArrow: $('.salons .leftArrow'),
 		nextArrow: $('.salons .rightArrow'),
 		responsive: [
-			{ breakpoint: 991, settings: { centerMode: true, slidesToShow: 2 } },
-			{ breakpoint: 575, settings: { slidesToShow: 1 } }
+			{
+				breakpoint: 991,
+				settings: {
+					centerMode: salonCount > 2,
+					slidesToShow: salonCount >= 2 ? 2 : salonCount
+				}
+			},
+			{
+				breakpoint: 575,
+				settings: {
+					slidesToShow: 1
+				}
+			}
 		]
 	});
+
 	$('.servicesSlider').slick({
 		arrows: true,
 		slidesToShow: 4,
@@ -27,6 +42,7 @@ $(document).ready(function () {
 			{ breakpoint: 575, settings: { slidesToShow: 1 } }
 		]
 	});
+
 	$('.mastersSlider').slick({
 		arrows: true,
 		slidesToShow: 4,
@@ -38,6 +54,7 @@ $(document).ready(function () {
 			{ breakpoint: 575, settings: { slidesToShow: 1 } }
 		]
 	});
+
 	$('.reviewsSlider').slick({
 		arrows: true,
 		slidesToShow: 4,
@@ -76,9 +93,9 @@ $(document).ready(function () {
 		$btn.toggleClass('active');
 	});
 
-	var salonBlocks = $('.service__salons .accordion__block').toArray();
+	var salonBlocks = $('.service__salons   .accordion__block').toArray();
 	var serviceItems = $('.service__services .accordion__block_item').toArray();
-	var masterItems = $('.service__masters .accordion__block_item').toArray();
+	var masterItems = $('.service__masters  .accordion__block_item').toArray();
 
 	function bindSelection() {
 		$(document).on('click', '.service__salons .accordion__block', function (e) {
@@ -119,9 +136,9 @@ $(document).ready(function () {
 	}
 
 	function updateCombinations() {
-		var salonId = $('.service__salons > button.selected').data('id') || null;
+		var salonId = $('.service__salons   > button.selected').data('id') || null;
 		var serviceId = $('.service__services > button.selected').data('id') || null;
-		var specialistId = $('.service__masters > button.selected').data('id') || null;
+		var specialistId = $('.service__masters  > button.selected').data('id') || null;
 
 		$.getJSON('/api/filter/', {
 			salon: salonId,
@@ -165,7 +182,6 @@ $(document).ready(function () {
 			$('#authModal').arcticmodal();
 		}
 	});
-
 	$('.rewiewPopupOpen').click(e => { e.preventDefault(); $('#reviewModal').arcticmodal(); });
 	$('.payPopupOpen').click(e => { e.preventDefault(); $('#paymentModal').arcticmodal(); });
 	$('.tipsPopupOpen').click(e => { e.preventDefault(); $('#tipsModal').arcticmodal(); });
@@ -177,8 +193,39 @@ $(document).ready(function () {
 		$(this).addClass('active');
 	});
 	$(document).on('click', '.servicePage', function () {
-		if ($('.time__elems_btn.active').length > 0 && $('.service__form_block > button.selected').length > 0) {
+		if ($('.time__elems_btn.active').length > 0 &&
+			$('.service__form_block > button.selected').length > 0) {
 			$('.time__btns_next').addClass('active');
 		}
+	});
+
+	$(document).on('click', '.time__btns_next.active', function (e) {
+		e.preventDefault();
+
+		const slotId = $('.time__elems_btn.active').data('slot-id');
+		const salonId = $('.service__salons > button.selected').data('id');
+		const serviceId = $('.service__services > button.selected').data('id');
+		const specialistId = $('.service__masters > button.selected').data('id');
+
+		if (!slotId || !salonId || !serviceId || !specialistId) {
+			alert('Пожалуйста, выберите все поля.');
+			return;
+		}
+
+		const url = '/api/book/';
+
+		$.post(url, {
+			slot_id: slotId,
+			salon_id: salonId,
+			service_id: serviceId,
+			specialist_id: specialistId,
+			csrfmiddlewaretoken: $('[name=csrfmiddlewaretoken]').val()
+		}).done(function (response) {
+			if (response.success && response.redirect_url) {
+				window.location.href = response.redirect_url;
+			} else {
+				alert('Ошибка при записи. Попробуйте снова.');
+			}
+		});
 	});
 });

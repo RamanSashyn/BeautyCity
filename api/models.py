@@ -154,3 +154,22 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+class TimeSlot(models.Model):
+    date = models.DateField('Дата')
+    time = models.TimeField('Время')
+    specialist = models.ForeignKey(Specialist, on_delete=models.CASCADE)
+    salon = models.ForeignKey(Salon, on_delete=models.CASCADE)
+    is_booked = models.BooleanField('Занято', default=False)
+
+    class Meta:
+        unique_together = ('date', 'time', 'specialist', 'salon')
+        ordering = ['date', 'time']
+        verbose_name = 'Слот времени'
+        verbose_name_plural = 'Слоты времени'
+
+    def __str__(self):
+        return f'{self.date} {self.time} ({self.specialist})'
+
+

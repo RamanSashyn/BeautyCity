@@ -4,8 +4,10 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Count
+from django.utils import timezone
+from datetime import datetime, timedelta, time
 
-from .models import Client, Salon, Service, Specialist, Category
+from .models import Client, Salon, Service, Specialist, Category, TimeSlot, Appointment
 
 
 def index_view(request):
@@ -26,10 +28,53 @@ def service_view(request):
                                  .prefetch_related('service_set')
     specialists = Specialist.objects.prefetch_related('salons', 'services')
 
+    slots = TimeSlot.objects.filter(is_booked=False, date__gte=timezone.now().date()).order_by('date', 'time')
+    morning_slots = slots.filter(time__lt=time(12, 0))
+    day_slots = slots.filter(time__gte=time(12, 0), time__lt=time(18, 0))
+    evening_slots = slots.filter(time__gte=time(18, 0))
+
+    if request.method == 'POST':
+        slot_id = request.POST.get('slot_id')
+        client_phone = request.POST.get('phone')
+        service_id = request.POST.get('service_id')
+
+        slot = TimeSlot.objects.get(id=slot_id)
+        client, _ = Client.objects.get_or_create(phone=client_phone)
+        service = Service.objects.get(id=service_id)
+
+        start = datetime.combine(slot.date, slot.time)
+        end = start + timedelta(minutes=service.duration_minutes)
+
+        Appointment.objects.create(
+            client=client,
+            specialist=slot.specialist,
+            service=service,
+            salon=slot.salon,
+            date_time_start=start,
+            date_time_end=end,
+            status='booked'
+        )
+
+        # Блокируем слот
+        slot.is_booked = True
+        slot.save()
+
+        return redirect('success')
+
+    slots = TimeSlot.objects.filter(is_booked=False, date__gte=timezone.now().date()).order_by('date', 'time')
+
+    context = {
+        'slots': slots,
+    }
+
     return render(request, 'service.html', {
         'salons': salons,
         'categories': categories,
         'specialists': specialists,
+        'slots': slots,
+        'morning_slots': morning_slots,
+        'day_slots': day_slots,
+        'evening_slots': evening_slots,
     })
 
 
@@ -123,3 +168,79 @@ def logout_view(request):
 def is_valid_phone(phone):
     pattern = r'^\+7\d{10}$'
     return re.match(pattern, phone)
+
+@csrf_exempt
+def book_appointment(request):
+    if request.method == 'POST':
+        slot_id = request.POST.get('slot_id')
+        salon_id = request.POST.get('salon_id')
+        service_id = request.POST.get('service_id')
+        specialist_id = request.POST.get('specialist_id')
+
+        request.session['booking_data'] = {
+            'slot_id': slot_id,
+            'salon_id': salon_id,
+            'service_id': service_id,
+            'specialist_id': specialist_id,
+        }
+        return JsonResponse({'success': True, 'redirect_url': '/api/service-finally/'})
+    return JsonResponse({'success': False, 'error': 'Invalid method'})
+
+def service_finally_view(request):
+    data = request.session.get('booking_data')
+    if not data:
+        return redirect('service_view')
+
+    slot = get_object_or_404(TimeSlot, id=data['slot_id'], is_booked=False)
+    salon = get_object_or_404(Salon, id=data['salon_id'])
+    service = get_object_or_404(Service, id=data['service_id'])
+    specialist = get_object_or_404(Specialist, id=data['specialist_id'])
+
+    if request.method == 'POST':
+        name = request.POST.get('fname')
+        phone = request.POST.get('tel')
+        question = request.POST.get('contactsTextarea')
+
+        if not name or not phone:
+            return render(request, 'serviceFinally.html', {
+                'error': 'Введите имя и телефон',
+                'service': service,
+                'salon': salon,
+                'specialist': specialist,
+                'slot': slot
+            })
+
+        client, _ = Client.objects.get_or_create(phone=phone)
+        client.name = name
+        client.save()
+
+        start = datetime.combine(slot.date, slot.time)
+        end = start + timedelta(minutes=service.duration_minutes)
+
+        appointment = Appointment.objects.create(
+            client=client,
+            specialist=specialist,
+            service=service,
+            salon=salon,
+            date_time_start=start,
+            date_time_end=end,
+            status='booked',
+            source='site'
+        )
+
+        slot.is_booked = True
+        slot.save()
+
+        del request.session['booking_data']
+        return redirect(f'/api/service-finally/{appointment.id}/')
+
+    return render(request, 'serviceFinally.html', {
+        'service': service,
+        'salon': salon,
+        'specialist': specialist,
+        'slot': slot
+    })
+
+def show_appointment(request, appointment_id):
+    appointment = get_object_or_404(Appointment, id=appointment_id)
+    return render(request, 'serviceFinally.html', {'appointment': appointment})
