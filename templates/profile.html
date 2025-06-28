@@ -5,21 +5,28 @@
   <h2>Личный кабинет</h2>
   <form method="post">
     {% csrf_token %}
-    <label>Имя:</label>
-    <input type="text" name="name" value="{{ client.name }}" required><br><br>
+    <div class="profile__group">
+        <label class="profile__label">Имя:</label>
+        <input type="text" name="name" value="{{ client.name }}" required class="profile__input">
+    </div>
+    <div class="profile__group">
+        <label class="profile__label">Дата рождения:</label>
+        <input type="date" name="birthday" value="{{ client.birthday|date:'Y-m-d' }}" class="profile__input">
+    </div>
 
-    <label>Дата рождения:</label>
-    <input type="date" name="birthday" value="{{ client.birthday|date:'Y-m-d' }}"><br><br>
+    <div class="profile__group">
+        <label class="profile__label">Пол:</label>
+        <select name="gender" class="profile__input">
+          <option value="">Не выбрано</option>
+          <option value="male" {% if client.gender == "male" %}selected{% endif %}>Мужской</option>
+          <option value="female" {% if client.gender == "female" %}selected{% endif %}>Женский</option>
+        </select>
+    </div>
 
-    <label>Пол:</label>
-    <select name="gender">
-      <option value="">Не выбрано</option>
-      <option value="male" {% if client.gender == "male" %}selected{% endif %}>Мужской</option>
-      <option value="female" {% if client.gender == "female" %}selected{% endif %}>Женский</option>
-    </select><br><br>
-
-    <button type="submit">Сохранить</button>
-    <a href="{% url 'logout' %}" style="margin-left: 20px;">Выйти</a>
+    <div class="profile__btns fic">
+        <button type="submit" class="profile__btn">Сохранить</button>
+        <a href="{% url 'logout' %}" class="profile__btn profile__btn_exit">Выйти</a>
+    </div>
   </form>
 </div>
 {% endblock %}

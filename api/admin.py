@@ -1,9 +1,10 @@
 from django.contrib import admin
+from django import forms
 from django.utils.html import format_html
 from .models import (
     Salon, Service, Specialist, Client,
     PromoCode, Appointment, WorkShift,
-    Payment, ConsentLog, Category
+    Payment, ConsentLog, Category, TimeSlot
 )
 
 @admin.register(Salon)
@@ -71,8 +72,29 @@ class AppointmentAdmin(admin.ModelAdmin):
     search_fields = ('client__phone',)
 
 
+class WorkShiftAdminForm(forms.ModelForm):
+    class Meta:
+        model = WorkShift
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if 'specialist' in self.data:
+            try:
+                specialist_id = int(self.data.get('specialist'))
+                specialist = Specialist.objects.get(pk=specialist_id)
+                self.fields['salon'].queryset = specialist.salons.all()
+            except (ValueError, Specialist.DoesNotExist):
+                pass
+
+        elif self.instance.pk and self.instance.specialist:
+            self.fields['salon'].queryset = self.instance.specialist.salons.all()
+
+
 @admin.register(WorkShift)
 class WorkShiftAdmin(admin.ModelAdmin):
+    form = WorkShiftAdminForm
     list_display = ('specialist', 'salon', 'date', 'start_time', 'end_time')
     list_filter = ('date', 'salon')
 
@@ -92,3 +114,10 @@ class ConsentLogAdmin(admin.ModelAdmin):
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
     search_fields = ('name',)
+
+@admin.register(TimeSlot)
+class TimeSlotAdmin(admin.ModelAdmin):
+    list_display = ('date', 'time', 'specialist', 'salon', 'is_booked')
+    list_filter = ('date', 'salon', 'specialist', 'is_booked')
+    search_fields = ('specialist__name', 'salon__name')
+    ordering = ('date', 'time')

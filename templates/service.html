@@ -16,6 +16,7 @@
 			</div>
 
 			<form action="#" class="service__form">
+				<input type="hidden" name="slot_id" id="slotId">
 
 				<div class="service__form_block service__salons">
 					<button class="accordion">(Выберите салон)</button>
@@ -86,27 +87,37 @@
 					<div class="col-md-8">
 						<div class="time__elems">
 							<div class="time__items">
-								<div class="time__elems_intro">Утро</div>
+								<h3>Утро</h3>
 								<div class="time__elems_elem fic">
-									<button data-time="10:00" class="time__elems_btn">10:00</button>
-									<button data-time="10:30" class="time__elems_btn">10:30</button>
+  									{% for slot in morning_slots %}
+    									<button type="button" class="time__elems_btn" data-slot-id="{{ slot.id }}">
+      										{{ slot.time|time:"H:i" }}
+    									</button>
+  									{% empty %}
+    									<p>Свободных слотов нет</p>
+  									{% endfor %}
 								</div>
 							</div>
 							<div class="time__items">
-								<div class="time__elems_intro">День</div>
-								<div class="time__elems_elem fic">
-									<button data-time="12:00" class="time__elems_btn">12:00</button>
-									<button data-time="12:30" class="time__elems_btn">12:30</button>
-									<button data-time="15:00" class="time__elems_btn">15:00</button>
-									<button data-time="16:30" class="time__elems_btn">16:30</button>
+								<h3>День</h3>								<div class="time__elems_elem fic">
+  									{% for slot in day_slots %}
+    									<button type="button" class="time__elems_btn" data-slot-id="{{ slot.id }}">
+      										{{ slot.time|time:"H:i" }}
+    									</button>
+  									{% empty %}
+    									<p>Свободных слотов нет</p>
+  									{% endfor %}
 								</div>
 							</div>
 							<div class="time__items">
-								<div class="time__elems_intro">Вечер</div>
-								<div class="time__elems_elem fic">
-									<button data-time="17:00" class="time__elems_btn">17:00</button>
-									<button data-time="18:30" class="time__elems_btn">18:30</button>
-									<button data-time="19:00" class="time__elems_btn">19:00</button>
+								<h3>Вечер</h3>								<div class="time__elems_elem fic">
+  									{% for slot in evening_slots %}
+    									<button type="button" class="time__elems_btn" data-slot-id="{{ slot.id }}">
+      										{{ slot.time|time:"H:i" }}
+    									</button>
+  									{% empty %}
+    									<p>Свободных слотов нет</p>
+  									{% endfor %}
 								</div>
 							</div>
 						</div>

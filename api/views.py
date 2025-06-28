@@ -4,8 +4,10 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Count
+from django.utils import timezone
+from datetime import datetime, timedelta, time
 
-from .models import Client, Salon, Service, Specialist, Category
+from .models import Client, Salon, Service, Specialist, Category, TimeSlot, Appointment
 
 
 def index_view(request):
@@ -26,10 +28,53 @@ def service_view(request):
                                  .prefetch_related('service_set')
     specialists = Specialist.objects.prefetch_related('salons', 'services')
 
+    slots = TimeSlot.objects.filter(is_booked=False, date__gte=timezone.now().date()).order_by('date', 'time')
+    morning_slots = slots.filter(time__lt=time(12, 0))
+    day_slots = slots.filter(time__gte=time(12, 0), time__lt=time(18, 0))
+    evening_slots = slots.filter(time__gte=time(18, 0))
+
+    if request.method == 'POST':
+        slot_id = request.POST.get('slot_id')
+        client_phone = request.POST.get('phone')
+        service_id = request.POST.get('service_id')
+
+        slot = TimeSlot.objects.get(id=slot_id)
+        client_phone = Client.objects.get_or_create(phone=client_phone)
+        service = Service.objects.get(id=service_id)
+
+        start = datetime.combine(slot.date, slot.time)
+        end = start + timedelta(minutes=service.duration_minutes)
+
+        Appointment.objects.create(
+            client=client,
+            specialist=slot.specialist,
+            service=service,
+            salon=slot.salon,
+            date_time_start=start,
+            date_time_end=end,
+            status='booked'
+        )
+
+        # Блокируем слот
+        slot.is_booked = True
+        slot.save()
+
+        return redirect('success')
+
+    slots = TimeSlot.objects.filter(is_booked=False, date__gte=timezone.now().date()).order_by('date', 'time')
+
+    context = {
+        'slots': slots,
+    }
+
     return render(request, 'service.html', {
         'salons': salons,
         'categories': categories,
         'specialists': specialists,
+        'slots': slots,
+        'morning_slots': morning_slots,
+        'day_slots': day_slots,
+        'evening_slots': evening_slots,
     })
 
 
