@@ -7,6 +7,7 @@ from .models import (
     Payment, ConsentLog, Category, TimeSlot
 )
 
+
 @admin.register(Salon)
 class SalonAdmin(admin.ModelAdmin):
     list_display = ('photo_preview', 'name', 'address', 'phone_number')
@@ -17,7 +18,6 @@ class SalonAdmin(admin.ModelAdmin):
         if obj.photo:
             return format_html('<img src="{}" width="50" height="50" style="object-fit: cover; border-radius: 5px;" />', obj.photo.url)
         return "Нет фото"
-
     photo_preview.short_description = "Фото"
 
 
@@ -32,7 +32,6 @@ class ServiceAdmin(admin.ModelAdmin):
         if obj.photo:
             return format_html('<img src="{}" width="50" height="50" style="object-fit: cover; border-radius: 5px;" />', obj.photo.url)
         return "Нет фото"
-
     photo_preview.short_description = "Фото"
 
 
@@ -47,6 +46,7 @@ class SpecialistAdmin(admin.ModelAdmin):
         if obj.photo:
             return format_html('<img src="{}" width="50" height="50" style="object-fit: cover; border-radius: 5px;" />', obj.photo.url)
         return "Нет фото"
+    photo_preview.short_description = "Фото"
 
     def list_salons(self, obj):
         return ", ".join([s.name for s in obj.salons.all()])
@@ -72,10 +72,38 @@ class AppointmentAdmin(admin.ModelAdmin):
     search_fields = ('client__phone',)
 
 
+class WorkShiftAdminForm(forms.ModelForm):
+    class Meta:
+        model = WorkShift
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'specialist' in self.data:
+            try:
+                specialist_id = int(self.data.get('specialist'))
+                specialist = Specialist.objects.get(pk=specialist_id)
+                self.fields['salon'].queryset = specialist.salons.all()
+            except (ValueError, Specialist.DoesNotExist):
+                pass
+        elif self.instance.pk and self.instance.specialist:
+            self.fields['salon'].queryset = self.instance.specialist.salons.all()
+
+
 @admin.register(WorkShift)
 class WorkShiftAdmin(admin.ModelAdmin):
+    form = WorkShiftAdminForm
     list_display = ('specialist', 'salon', 'date', 'start_time', 'end_time')
     list_filter = ('date', 'salon')
+
+
+@admin.register(TimeSlot)
+class TimeSlotAdmin(admin.ModelAdmin):
+    list_display = ('date', 'time', 'specialist', 'salon', 'is_booked')
+    list_filter = ('date', 'salon', 'specialist', 'is_booked')
+    search_fields = ('specialist__name', 'salon__name')
+    ordering = ('date', 'time')
+    readonly_fields = ('date', 'time', 'specialist', 'salon', 'is_booked')
 
 
 @admin.register(Payment)
@@ -89,36 +117,8 @@ class ConsentLogAdmin(admin.ModelAdmin):
     list_display = ('client_phone', 'consent_given_at')
     search_fields = ('client_phone',)
 
+
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
     search_fields = ('name',)
-
-
-class TimeSlotAdminForm(forms.ModelForm):
-    class Meta:
-        model = WorkShift
-        fields = '__all__'
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        if 'specialist' in self.data:
-            try:
-                specialist_id = int(self.data.get('specialist'))
-                specialist = Specialist.objects.get(pk=specialist_id)
-                self.fields['salon'].queryset = specialist.salons.all()
-            except (ValueError, Specialist.DoesNotExist):
-                pass
-
-        elif self.instance.pk and self.instance.specialist:
-            self.fields['salon'].queryset = self.instance.specialist.salons.all()
-
-
-@admin.register(TimeSlot)
-class TimeSlotAdmin(admin.ModelAdmin):
-    form = TimeSlotAdminForm
-    list_display = ('date', 'time', 'specialist', 'salon', 'is_booked')
-    list_filter = ('date', 'salon', 'specialist', 'is_booked')
-    search_fields = ('specialist__name', 'salon__name')
-    ordering = ('date', 'time')

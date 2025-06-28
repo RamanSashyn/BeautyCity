@@ -9,6 +9,7 @@ from .views import (
     service_finally_view,
     book_appointment,
     show_appointment,
+    get_slots_by_specialist
 )
 
 urlpatterns = [
@@ -20,4 +21,5 @@ urlpatterns = [
     path('book/', book_appointment, name='book_appointment'),
     path("service-finally/", service_finally_view, name="service_finally"),
     path("service-finally/<int:appointment_id>/", show_appointment, name="show_appointment"),
+    path("slots-by-specialist/", get_slots_by_specialist, name="slots_by_specialist"),
 ]
