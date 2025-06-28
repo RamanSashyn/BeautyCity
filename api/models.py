@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -15,13 +17,24 @@ class Salon(models.Model):
         return self.name
 
 
+class Category(models.Model):
+    name = models.CharField('Категория', max_length=100)
+
+    class Meta:
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
+
+    def __str__(self):
+        return self.name
+
+
 class Service(models.Model):
     name = models.CharField('Название услуги', max_length=100)
     description = models.TextField('Описание', blank=True)
     base_price = models.DecimalField('Базовая цена', max_digits=8, decimal_places=2)
     duration_minutes = models.PositiveIntegerField('Длительность (мин)')
     photo = models.ImageField('Фото услуги', upload_to='services/', blank=True, null=True)
-    category = models.ForeignKey("Category", verbose_name="Категория", on_delete=models.SET_NULL, null=True, blank=True)
+    category = models.ForeignKey(Category, verbose_name="Категория", on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
         verbose_name = 'Процедура'
@@ -40,7 +53,6 @@ class Specialist(models.Model):
     experience_years = models.PositiveIntegerField('Стаж (лет)', default=0)
     experience_months = models.PositiveIntegerField('Стаж (мес.)', default=0)
     reviews_count = models.PositiveIntegerField('Количество отзывов', default=0)
-
 
     class Meta:
         verbose_name = 'Специалист'
@@ -80,6 +92,23 @@ class PromoCode(models.Model):
         return self.code
 
 
+class TimeSlot(models.Model):
+    date = models.DateField('Дата')
+    time = models.TimeField('Время')
+    specialist = models.ForeignKey(Specialist, on_delete=models.CASCADE)
+    salon = models.ForeignKey(Salon, on_delete=models.CASCADE)
+    is_booked = models.BooleanField('Занято', default=False)
+
+    class Meta:
+        unique_together = ('date', 'time', 'specialist', 'salon')
+        ordering = ['date', 'time']
+        verbose_name = 'Слот времени'
+        verbose_name_plural = 'Слоты времени'
+
+    def __str__(self):
+        return f'{self.date} {self.time} ({self.specialist})'
+
+
 class Appointment(models.Model):
     client = models.ForeignKey(Client, verbose_name='Клиент', on_delete=models.CASCADE)
     specialist = models.ForeignKey(Specialist, verbose_name='Специалист', on_delete=models.CASCADE)
@@ -102,6 +131,32 @@ class Appointment(models.Model):
     def __str__(self):
         return f'{self.client} - {self.service} - {self.date_time_start}'
 
+    def clean(self):
+        if TimeSlot.objects.filter(
+            specialist=self.specialist,
+            salon=self.salon,
+            date=self.date_time_start.date(),
+            time=self.date_time_start.time(),
+            is_booked=True
+        ).exists():
+            raise ValidationError("Выбранное время уже занято.")
+
+    def save(self, *args, **kwargs):
+        creating = self.pk is None
+        super().save(*args, **kwargs)
+
+        if creating:
+            start = self.date_time_start
+            end = self.date_time_end
+
+            TimeSlot.objects.filter(
+                specialist=self.specialist,
+                salon=self.salon,
+                date=start.date(),
+                time__gte=start.time(),
+                time__lt=end.time()
+            ).update(is_booked=True)
+
 
 class WorkShift(models.Model):
     specialist = models.ForeignKey(Specialist, verbose_name='Специалист', on_delete=models.CASCADE)
@@ -116,6 +171,34 @@ class WorkShift(models.Model):
 
     def __str__(self):
         return f'{self.specialist} - {self.date}'
+
+    def save(self, *args, **kwargs):
+        creating = self.pk is None
+        super().save(*args, **kwargs)
+
+        if creating:
+            self.generate_time_slots()
+
+    def generate_time_slots(self, interval_minutes=30):
+        existing = TimeSlot.objects.filter(
+            specialist=self.specialist,
+            salon=self.salon,
+            date=self.date
+        )
+        if existing.exists():
+            return
+
+        start_dt = datetime.combine(self.date, self.start_time)
+        end_dt = datetime.combine(self.date, self.end_time)
+        current = start_dt
+        while current < end_dt:
+            TimeSlot.objects.get_or_create(
+                date=self.date,
+                time=current.time(),
+                specialist=self.specialist,
+                salon=self.salon
+            )
+            current += timedelta(minutes=interval_minutes)
 
 
 class Payment(models.Model):
@@ -143,33 +226,3 @@ class ConsentLog(models.Model):
 
     def __str__(self):
         return self.client_phone
-
-
-class Category(models.Model):
-    name = models.CharField('Категория', max_length=100)
-
-    class Meta:
-        verbose_name = 'Категория'
-        verbose_name_plural = 'Категории'
-
-    def __str__(self):
-        return self.name
-    
-
-class TimeSlot(models.Model):
-    date = models.DateField('Дата')
-    time = models.TimeField('Время')
-    specialist = models.ForeignKey(Specialist, on_delete=models.CASCADE)
-    salon = models.ForeignKey(Salon, on_delete=models.CASCADE)
-    is_booked = models.BooleanField('Занято', default=False)
-
-    class Meta:
-        unique_together = ('date', 'time', 'specialist', 'salon')
-        ordering = ['date', 'time']
-        verbose_name = 'Слот времени'
-        verbose_name_plural = 'Слоты времени'
-
-    def __str__(self):
-        return f'{self.date} {self.time} ({self.specialist})'
-
-

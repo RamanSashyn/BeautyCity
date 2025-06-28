@@ -15,25 +15,12 @@ $(document).ready(function () {
 		prevArrow: $('.salons .leftArrow'),
 		nextArrow: $('.salons .rightArrow'),
 		responsive: [
-			{
-				breakpoint: 991,
-				settings: {
-					centerMode: salonCount > 2,
-					slidesToShow: salonCount >= 2 ? 2 : salonCount
-				}
-			},
-			{
-				breakpoint: 575,
-				settings: {
-					slidesToShow: 1
-				}
-			}
+			{ breakpoint: 991, settings: { centerMode: salonCount > 2, slidesToShow: salonCount >= 2 ? 2 : salonCount } },
+			{ breakpoint: 575, settings: { slidesToShow: 1 } }
 		]
 	});
-
 	$('.servicesSlider').slick({
-		arrows: true,
-		slidesToShow: 4,
+		arrows: true, slidesToShow: 4,
 		prevArrow: $('.services .leftArrow'),
 		nextArrow: $('.services .rightArrow'),
 		responsive: [
@@ -42,10 +29,8 @@ $(document).ready(function () {
 			{ breakpoint: 575, settings: { slidesToShow: 1 } }
 		]
 	});
-
 	$('.mastersSlider').slick({
-		arrows: true,
-		slidesToShow: 4,
+		arrows: true, slidesToShow: 4,
 		prevArrow: $('.masters .leftArrow'),
 		nextArrow: $('.masters .rightArrow'),
 		responsive: [
@@ -54,10 +39,8 @@ $(document).ready(function () {
 			{ breakpoint: 575, settings: { slidesToShow: 1 } }
 		]
 	});
-
 	$('.reviewsSlider').slick({
-		arrows: true,
-		slidesToShow: 4,
+		arrows: true, slidesToShow: 4,
 		prevArrow: $('.reviews .leftArrow'),
 		nextArrow: $('.reviews .rightArrow'),
 		responsive: [
@@ -67,83 +50,125 @@ $(document).ready(function () {
 		]
 	});
 
-	$('.header__mobMenu').click(function () { $('#mobMenu').show(); });
-	$('.mobMenuClose').click(function () { $('#mobMenu').hide(); });
+	$('.header__mobMenu').click(() => $('#mobMenu').show());
+	$('.mobMenuClose').click(() => $('#mobMenu').hide());
 
-	new AirDatepicker('#datepickerHere');
+	function loadSlots(selectedDate) {
+		const salonId = $('.service__salons > button.selected').data('id') || '';
+		const specialistId = $('.service__masters > button.selected').data('id') || '';
+		const serviceId = $('.service__services > button.selected').data('id') || '';
+		const date = selectedDate
+			|| $('#datepickerHere').val()
+			|| new Date().toISOString().split('T')[0];
 
-	$(document).on('click', '.service__form_block > button.accordion', function (e) {
-		e.preventDefault();
-		var $btn = $(this);
-		var $panel = $btn.next('.panel');
+		const params = new URLSearchParams({ date });
+		if (salonId) params.append('salon_id', salonId);
+		if (specialistId) params.append('specialist_id', specialistId);
+		if (serviceId) params.append('service_id', serviceId);
 
-		$panel.slideToggle(200);
-		$btn.toggleClass('active');
+		$.getJSON(`/api/slots-by-specialist/?${params.toString()}`, function (slots) {
+			const sections = {
+				morning: $('.time__items').eq(0).find('.time__elems_elem').empty(),
+				day: $('.time__items').eq(1).find('.time__elems_elem').empty(),
+				evening: $('.time__items').eq(2).find('.time__elems_elem').empty(),
+			};
+			slots.forEach(slot => {
+				const btn = $('<button>')
+					.addClass('time__elems_btn')
+					.attr('type', 'button')
+					.attr('data-slot-id', slot.id)
+					.text(slot.time);
+				if (slot.hour < 12) sections.morning.append(btn);
+				else if (slot.hour < 18) sections.day.append(btn);
+				else sections.evening.append(btn);
+			});
+		});
+	}
 
-		if ($btn.closest('.service__services').length) {
+	new AirDatepicker('#datepickerHere', {
+		dateFormat: 'yyyy-MM-dd',
+		onSelect({ formattedDate }) {
+			loadSlots(formattedDate);
 			updateCombinations();
 		}
 	});
 
+	$(document).on('click', '.service__form_block > button.accordion', function (e) {
+		e.preventDefault();
+		var $btn = $(this), $panel = $btn.next('.panel');
+		$panel.slideToggle(200);
+		$btn.toggleClass('active');
+		if ($btn.closest('.service__services').length) updateCombinations();
+	});
+
 	$(document).on('click', '.service__services > .panel > button.accordion', function (e) {
 		e.preventDefault();
-		var $btn = $(this);
-		var $panel = $btn.next('.panel');
+		var $btn = $(this), $panel = $btn.next('.panel');
 		$panel.slideToggle(200);
 		$btn.toggleClass('active');
 	});
 
-	var salonBlocks = $('.service__salons   .accordion__block').toArray();
+	var salonBlocks = $('.service__salons .accordion__block').toArray();
 	var serviceItems = $('.service__services .accordion__block_item').toArray();
-	var masterItems = $('.service__masters  .accordion__block_item').toArray();
+	var masterItems = $('.service__masters .accordion__block_item').toArray();
 
 	function bindSelection() {
 		$(document).on('click', '.service__salons .accordion__block', function (e) {
 			e.preventDefault();
-			var $item = $(this),
-				id = $item.data('id'),
-				txt = $item.find('.accordion__block_intro').text() + '  ' + $item.find('.accordion__block_address').text(),
-				$btn = $item.closest('.service__form_block').find('> button.accordion');
-
+			var $it = $(this),
+				id = $it.data('id'),
+				txt = $it.find('.accordion__block_intro').text() + '  ' + $it.find('.accordion__block_address').text(),
+				$btn = $it.closest('.service__form_block').find('> button.accordion');
 			$btn.addClass('selected').text(txt).data('id', id).removeClass('active');
 			$btn.next('.panel').hide();
+			loadSlots();
 			updateCombinations();
 		});
-
 		$(document).on('click', '.service__services .accordion__block_item', function (e) {
 			e.preventDefault();
-			var $item = $(this),
-				id = $item.data('id'),
-				txt = $item.find('.accordion__block_item_intro').text() + '  ' + $item.find('.accordion__block_item_address').text(),
-				$btn = $item.closest('.service__form_block').find('> button.accordion');
-
+			var $it = $(this),
+				id = $it.data('id'),
+				txt = $it.find('.accordion__block_item_intro').text() + '  ' + $it.find('.accordion__block_item_address').text(),
+				$btn = $it.closest('.service__form_block').find('> button.accordion');
 			$btn.addClass('selected').text(txt).data('id', id).removeClass('active');
 			$btn.next('.panel').hide();
+			loadSlots();
 			updateCombinations();
 		});
-
 		$(document).on('click', '.service__masters .accordion__block_item', function (e) {
 			e.preventDefault();
-			var $item = $(this),
-				id = $item.data('id'),
-				txt = $item.find('.accordion__block_item_intro').text(),
-				$btn = $item.closest('.service__form_block').find('> button.accordion');
-
+			var $it = $(this),
+				id = $it.data('id'),
+				txt = $it.find('.accordion__block_item_intro').text(),
+				$btn = $it.closest('.service__form_block').find('> button.accordion');
 			$btn.addClass('selected').text(txt).data('id', id).removeClass('active');
 			$btn.next('.panel').hide();
+			loadSlots();
 			updateCombinations();
 		});
 	}
+	bindSelection();
+
+	$(document).on('click', '.time__items .time__elems_btn', function (e) {
+		e.preventDefault();
+		$('.time__elems_btn').removeClass('active');
+		$(this).addClass('active');
+		updateCombinations();
+	});
 
 	function updateCombinations() {
-		var salonId = $('.service__salons   > button.selected').data('id') || null;
+		var salonId = $('.service__salons > button.selected').data('id') || null;
 		var serviceId = $('.service__services > button.selected').data('id') || null;
-		var specialistId = $('.service__masters  > button.selected').data('id') || null;
+		var specialistId = $('.service__masters > button.selected').data('id') || null;
+		var slotId = $('.time__elems_btn.active').data('slot-id') || null;
+		var date = $('#datepickerHere').val() || new Date().toISOString().split('T')[0];
 
 		$.getJSON('/api/filter/', {
 			salon: salonId,
 			service: serviceId,
-			specialist: specialistId
+			specialist: specialistId,
+			slot_id: slotId,
+			date: date
 		}, function (data) {
 			applyFilters(data, serviceId);
 		});
@@ -166,13 +191,12 @@ $(document).ready(function () {
 				$(this)[hasAny ? 'show' : 'hide']();
 			});
 		}
-
 		$('.service__services > .panel > button.accordion').filter(function () {
 			return !$(this).text().trim();
 		}).remove();
 	}
 
-	bindSelection();
+	loadSlots();
 	updateCombinations();
 
 	const isLoggedIn = document.body.dataset.isLoggedIn === 'true';
@@ -187,40 +211,28 @@ $(document).ready(function () {
 	$('.tipsPopupOpen').click(e => { e.preventDefault(); $('#tipsModal').arcticmodal(); });
 	$('.authPopup__form').submit(() => { $('#confirmModal').arcticmodal(); return true; });
 
-	$(document).on('click', '.time__items .time__elems_btn', function (e) {
-		e.preventDefault();
-		$('.time__elems_btn').removeClass('active');
-		$(this).addClass('active');
-	});
 	$(document).on('click', '.servicePage', function () {
-		if ($('.time__elems_btn.active').length > 0 &&
-			$('.service__form_block > button.selected').length > 0) {
+		if ($('.time__elems_btn.active').length > 0 && $('.service__form_block > button.selected').length > 0) {
 			$('.time__btns_next').addClass('active');
 		}
 	});
-
 	$(document).on('click', '.time__btns_next.active', function (e) {
 		e.preventDefault();
-
 		const slotId = $('.time__elems_btn.active').data('slot-id');
 		const salonId = $('.service__salons > button.selected').data('id');
 		const serviceId = $('.service__services > button.selected').data('id');
 		const specialistId = $('.service__masters > button.selected').data('id');
-
 		if (!slotId || !salonId || !serviceId || !specialistId) {
 			alert('Пожалуйста, выберите все поля.');
 			return;
 		}
-
-		const url = '/api/book/';
-
-		$.post(url, {
+		$.post('/api/book/', {
 			slot_id: slotId,
 			salon_id: salonId,
 			service_id: serviceId,
 			specialist_id: specialistId,
 			csrfmiddlewaretoken: $('[name=csrfmiddlewaretoken]').val()
-		}).done(function (response) {
+		}).done(response => {
 			if (response.success && response.redirect_url) {
 				window.location.href = response.redirect_url;
 			} else {
