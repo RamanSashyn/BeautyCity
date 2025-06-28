@@ -96,15 +96,15 @@
 							<p style="color: red;">{{ error }}</p>
 							{% endif %}
 							<div class="contacts__form_block fic">
-								<input type="text" name="fname" class="contacts__form_iunput" placeholder="Введите имя"
-									required="">
+								<input type="text" name="fname" class="contacts__form_iunput"
+                                       value="{{ name }}" placeholder="Введите имя" required="">
 								<div class="contacts__form_inputBlock">
 									<input type="text" name="tel" class="contacts__form_iunput"
-										placeholder="+7(999)999--99-99" required="">
+										value="{{ phone }}" placeholder="+7(999)999--99-99" required="">
 								</div>
 							</div>
 							<textarea name="contactsTextarea" class="contacts__form_textarea"
-								placeholder="Вопрос (необязательно)"></textarea>
+								placeholder="Вопрос (необязательно)">{{ question }}</textarea>
 							<div class="contacts__form_checkboxBlock fic">
 								<input type="checkbox" class="contacts__form_checkbox" checked="">
 								<span class="contacts__form_checkboxBlock__intro">Я согласен(а) с политикой

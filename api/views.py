@@ -210,6 +210,18 @@ def service_finally_view(request):
                 'slot': slot
             })
 
+        if not is_valid_phone(phone):
+            return render(request, 'serviceFinally.html', {
+                'error': 'Введите корректный номер телефона в формате +7XXXXXXXXXX',
+                'service': service,
+                'salon': salon,
+                'specialist': specialist,
+                'slot': slot,
+                'name': name,
+                'phone': phone,
+                'question': question
+            })
+
         client, _ = Client.objects.get_or_create(phone=phone)
         client.name = name
         client.save()
