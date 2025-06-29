@@ -241,4 +241,28 @@ $(document).ready(function () {
 			}
 		});
 	});
+
+	ymaps.ready(function () {
+		if (!document.getElementById('map')) return;
+		var points = window.mapPoints || [];
+		var center = points.length
+			? [points[0].lat, points[0].lon]
+			: [59.94, 30.32];
+
+		var myMap = new ymaps.Map('map', {
+			center: center,
+			zoom: 12,
+			controls: ['zoomControl', 'fullscreenControl']
+		});
+
+		points.forEach(function (pt) {
+			myMap.geoObjects.add(
+				new ymaps.Placemark(
+					[pt.lat, pt.lon],
+					{ hintContent: pt.hint },
+					{ preset: 'islands#redDotIcon' }
+				)
+			);
+		});
+	});
 });

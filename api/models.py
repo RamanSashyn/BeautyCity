@@ -1,13 +1,18 @@
 from datetime import datetime, timedelta
 from django.core.exceptions import ValidationError
 from django.db import models
+import requests
+from django.conf import settings
 
 
 class Salon(models.Model):
-    name = models.CharField('Название', max_length=150)
-    address = models.CharField('Адрес', max_length=150)
+    name         = models.CharField('Название',      max_length=150)
+    address      = models.CharField('Адрес',         max_length=150)
     phone_number = models.CharField('Номер телефона', max_length=30)
-    photo = models.ImageField('Фото салона', upload_to='salons/', blank=True, null=True)
+    photo        = models.ImageField('Фото салона',   upload_to='salons/', blank=True, null=True)
+
+    lat = models.FloatField('Широта', null=True, blank=True)
+    lon = models.FloatField('Долгота', null=True, blank=True)
 
     class Meta:
         verbose_name = 'Салон'
@@ -16,6 +21,28 @@ class Salon(models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        if self.address:
+            url = 'https://geocode-maps.yandex.ru/1.x'
+            params = {
+                'format': 'json',
+                'apikey': settings.YANDEX_GEOCODE_KEY,
+                'geocode': self.address
+            }
+            try:
+                resp = requests.get(url, params=params)
+                resp.raise_for_status()
+                data = resp.json()
+                pos = data['response']['GeoObjectCollection']\
+                          ['featureMember'][0]['GeoObject']['Point']['pos']
+                lon_str, lat_str = pos.split()
+                self.lon = float(lon_str)
+                self.lat = float(lat_str)
+            except Exception:
+                self.lat = None
+                self.lon = None
+
+        super().save(*args, **kwargs)
 
 class Category(models.Model):
     name = models.CharField('Категория', max_length=100)

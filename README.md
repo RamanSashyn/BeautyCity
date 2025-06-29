@@ -43,6 +43,35 @@ venv\Scripts\activate     # для Windows
 pip install -r requirements.txt
 ```
 
+3. **Настройка переменных окружения**
+
+Создайте файл `.env` в корне проекта:
+
+```
+SECRET_KEY="...."
+DEBUG=True
+ALLOWED_HOSTS=example.com,localhost,127.0.0.1
+
+# Настройки базы данных
+DATABASE_URL="postgres://user:pass@host:5432/dbname"
+DATABASE_URL="sqlite:///$(pwd)/db.sqlite3"
+
+TIME_ZONE='Asia/Krasnoyarsk'
+LANGUAGE_CODE='ru-ru'
+
+STATIC_URL='/static/'
+STATIC_ROOT='staticfiles'
+STATICFILES_DIRS='static'
+
+MEDIA_URL='/media/'
+MEDIA_ROOT='media'
+
+YANDEX_GEOCODE_KEY=ваш_yandex_geocode_ключ
+YANDEX_STATICMAP_KEY=ваш_yandex_staticmap_ключ
+```
+
+Получите ключи Яндекс.Карт по ссылке: [https://developer.tech.yandex.ru/services/](https://developer.tech.yandex.ru/services/)
+
 4. **Примени миграции:**
 
 ```bash
