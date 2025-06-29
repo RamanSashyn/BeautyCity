@@ -11,6 +11,10 @@ from django.db.models import Count
 from django.utils import timezone
 from datetime import datetime, timedelta, time
 from django.utils.dateparse import parse_date
+from django.db import transaction
+from django.urls import reverse
+from collections import defaultdict
+
 
 from .models import (
     Client, Salon, Service, Specialist,
@@ -70,6 +74,24 @@ def service_view(request):
         client_phone = request.POST.get('phone')
         service_id   = request.POST.get('service_id')
 
+        if not all([slot_id, client_phone, service_id]):
+            return render(request, 'service.html', {
+                'salons': salons, 'categories': categories,
+                'specialists': specialists,
+                'slots': slots, 'morning_slots': morning_slots,
+                'day_slots': day_slots, 'evening_slots': evening_slots,
+                'error': 'Пожалуйста, заполните все поля.'
+            })
+
+        if not is_valid_phone(client_phone):
+            return render(request, 'service.html', {
+                'salons': salons, 'categories': categories,
+                'specialists': specialists,
+                'slots': slots, 'morning_slots': morning_slots,
+                'day_slots': day_slots, 'evening_slots': evening_slots,
+                'error': 'Введите корректный номер телефона в формате +7XXXXXXXXXX'
+            })
+
         slot = get_object_or_404(TimeSlot, id=slot_id, is_booked=False)
         client, _ = Client.objects.get_or_create(phone=client_phone)
         service = get_object_or_404(Service, id=service_id)
@@ -101,7 +123,6 @@ def service_view(request):
         'day_slots': day_slots,
         'evening_slots': evening_slots,
     })
-
 
 @require_GET
 def filter_entities(request):
@@ -252,15 +273,17 @@ def profile_view(request):
     client_id = request.session.get("client_id")
     if not client_id:
         return redirect("/")
-    client = get_object_or_404(Client, id=client_id)
-    if request.method == "POST":
-        client.name     = request.POST.get("name", "")
-        client.gender   = request.POST.get("gender", "")
-        client.birthday = request.POST.get("birthday", "")
-        client.save()
-        return redirect("/")
-    return render(request, "profile.html", {"client": client})
 
+    client = get_object_or_404(Client, id=client_id)
+
+    appointments = Appointment.objects.filter(
+        client=client
+    ).select_related('specialist', 'service', 'salon').order_by('-date_time_start')
+
+    return render(request, "profile.html", {
+        "client": client,
+        "appointments": appointments,
+    })
 
 def logout_view(request):
     request.session.flush()
@@ -280,23 +303,40 @@ def book_appointment(request):
             'service_id':    request.POST.get('service_id'),
             'specialist_id': request.POST.get('specialist_id'),
         }
-        return JsonResponse({'success': True, 'redirect_url': '/api/service-finally/'})
+        redirect_url = reverse('service_finally')
+        return JsonResponse({'success': True, 'redirect_url': redirect_url})
     return JsonResponse({'success': False, 'error': 'Invalid method'})
 
 
+@transaction.atomic
 def service_finally_view(request):
     data = request.session.get('booking_data')
     if not data:
         return redirect('service_view')
-    slot       = get_object_or_404(TimeSlot,   id=data['slot_id'],   is_booked=False)
-    salon      = get_object_or_404(Salon,      id=data['salon_id'])
-    service    = get_object_or_404(Service,    id=data['service_id'])
+
+    try:
+        slot = TimeSlot.objects.select_for_update().get(id=data['slot_id'], is_booked=False)
+    except TimeSlot.DoesNotExist:
+        return redirect('service_view')
+
+    salon = get_object_or_404(Salon, id=data['salon_id'])
+    service = get_object_or_404(Service, id=data['service_id'])
     specialist = get_object_or_404(Specialist, id=data['specialist_id'])
+
+    if not specialist.services.filter(id=service.id).exists():
+        return render(request, 'serviceFinally.html', {
+            'error':      'Указанный специалист не оказывает выбранную услугу.',
+            'service':    service,
+            'salon':      salon,
+            'specialist': specialist,
+            'slot':       slot,
+        })
 
     if request.method == 'POST':
         name     = request.POST.get('fname')
         phone    = request.POST.get('tel')
         question = request.POST.get('contactsTextarea')
+
         if not name or not phone:
             return render(request, 'serviceFinally.html', {
                 'error':      'Введите имя и телефон',
@@ -310,18 +350,28 @@ def service_finally_view(request):
                 'specialist': specialist, 'slot': slot,
                 'name': name, 'phone': phone, 'question': question
             })
+
         client, _ = Client.objects.get_or_create(phone=phone)
         client.name = name
         client.save()
+
         start = datetime.combine(slot.date, slot.time)
         end   = start + timedelta(minutes=service.duration_minutes)
+
         appointment = Appointment.objects.create(
-            client=client, specialist=specialist, service=service,
-            salon=salon, date_time_start=start,
-            date_time_end=end, status='booked', source='site'
+            client=client,
+            specialist=specialist,
+            service=service,
+            salon=salon,
+            date_time_start=start,
+            date_time_end=end,
+            status='booked',
+            source='site'
         )
+
         slot.is_booked = True
         slot.save()
+
         del request.session['booking_data']
         return redirect(f'/api/service-finally/{appointment.id}/')
 
@@ -407,3 +457,18 @@ def get_slots_by_specialist(request):
             })
 
     return JsonResponse(result, safe=False)
+
+def settings_view(request):
+    client_id = request.session.get("client_id")
+    if not client_id:
+        return redirect("/")
+    client = get_object_or_404(Client, id=client_id)
+
+    if request.method == "POST":
+        client.name     = request.POST.get("name", "")
+        client.gender   = request.POST.get("gender", "")
+        client.birthday = request.POST.get("birthday", "")
+        client.save()
+        return redirect("settings")
+
+    return render(request, "settings.html", {"client": client})

@@ -159,14 +159,26 @@ class Appointment(models.Model):
         return f'{self.client} - {self.service} - {self.date_time_start}'
 
     def clean(self):
-        if TimeSlot.objects.filter(
+        slot_conflict = TimeSlot.objects.filter(
             specialist=self.specialist,
             salon=self.salon,
             date=self.date_time_start.date(),
             time=self.date_time_start.time(),
             is_booked=True
-        ).exists():
-            raise ValidationError("Выбранное время уже занято.")
+        )
+
+        if not self.pk:
+            if slot_conflict.exists():
+                raise ValidationError("Выбранное время уже занято.")
+        else:
+            current = Appointment.objects.filter(pk=self.pk).first()
+            if current and (
+                current.date_time_start != self.date_time_start or
+                current.specialist != self.specialist or
+                current.salon != self.salon
+            ):
+                if slot_conflict.exists():
+                    raise ValidationError("Выбранное время уже занято.")
 
     def save(self, *args, **kwargs):
         creating = self.pk is None

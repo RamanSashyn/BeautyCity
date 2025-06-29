@@ -1,25 +1,32 @@
 {% load static %}
+
 <div class="accaunt__left">
     <div class="accaunt__ava fic">
-        <img src="{% static 'img/avatars/1.svg' %}" alt="avatar" class="accaunt__ava_img">
-        <span class="accaunt__ava_name">{% block acc_name %}Имя пользователя{% endblock %}</span>
+        {% if client.avatar %}
+        <img src="{{ client.avatar.url }}" alt="avatar" class="accaunt__ava_img">
+        {% else %}
+        <img src="{% static 'img/avatars/acc.svg' %}" alt="avatar" class="accaunt__ava_img">
+        {% endif %}
+        <span class="accaunt__ava_name">{{ client.name }}</span>
     </div>
+
     <div class="accaunt__settings fic">
-        <a href="#" class="accaunt__settings_intro">Изменить профиль</a>
+        <a href="{% url 'settings' %}" class="accaunt__settings_intro">Изменить профиль</a>
     </div>
+
     <nav>
         <div class="accaunt__menu_title">МЕНЮ</div>
         <ul class="accaunt__menu">
-            <li class="accaunt__menu_item active">
-                <a href="#" class="accaunt__menu_item__link">
+            <li class="accaunt__menu_item {% if '/profile' in request.path %}active{% endif %}">
+                <a href="{% url 'profile' %}" class="accaunt__menu_item__link">
                     <div class="accaunt__menu_block fic">
                         <img src="{% static 'img/icons/list.svg' %}" alt="icon" class="accaunt__menu_icon">
                         <span class="accaunt__menu_item__link_intro">Мои записи</span>
                     </div>
                 </a>
             </li>
-            <li class="accaunt__menu_item">
-                <a href="#" class="accaunt__menu_item__link">
+            <li class="accaunt__menu_item {% if '/settings' in request.path %}active{% endif %}">
+                <a href="{% url 'settings' %}" class="accaunt__menu_item__link">
                     <div class="accaunt__menu_block fic">
                         <img src="{% static 'img/icons/settings.svg' %}" alt="icon" class="accaunt__menu_icon">
                         <span class="accaunt__menu_item__link_intro">Настройки</span>
