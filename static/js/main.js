@@ -20,7 +20,8 @@ $(document).ready(function () {
 		]
 	});
 	$('.servicesSlider').slick({
-		arrows: true, slidesToShow: 4,
+		arrows: true,
+		slidesToShow: 4,
 		prevArrow: $('.services .leftArrow'),
 		nextArrow: $('.services .rightArrow'),
 		responsive: [
@@ -30,7 +31,8 @@ $(document).ready(function () {
 		]
 	});
 	$('.mastersSlider').slick({
-		arrows: true, slidesToShow: 4,
+		arrows: true,
+		slidesToShow: 4,
 		prevArrow: $('.masters .leftArrow'),
 		nextArrow: $('.masters .rightArrow'),
 		responsive: [
@@ -40,7 +42,8 @@ $(document).ready(function () {
 		]
 	});
 	$('.reviewsSlider').slick({
-		arrows: true, slidesToShow: 4,
+		arrows: true,
+		slidesToShow: 4,
 		prevArrow: $('.reviews .leftArrow'),
 		nextArrow: $('.reviews .rightArrow'),
 		responsive: [
@@ -100,7 +103,6 @@ $(document).ready(function () {
 		$btn.toggleClass('active');
 		if ($btn.closest('.service__services').length) updateCombinations();
 	});
-
 	$(document).on('click', '.service__services > .panel > button.accordion', function (e) {
 		e.preventDefault();
 		var $btn = $(this), $panel = $btn.next('.panel');
@@ -115,10 +117,9 @@ $(document).ready(function () {
 	function bindSelection() {
 		$(document).on('click', '.service__salons .accordion__block', function (e) {
 			e.preventDefault();
-			var $it = $(this),
-				id = $it.data('id'),
-				txt = $it.find('.accordion__block_intro').text() + '  ' + $it.find('.accordion__block_address').text(),
-				$btn = $it.closest('.service__form_block').find('> button.accordion');
+			var $it = $(this), id = $it.data('id');
+			var txt = $it.find('.accordion__block_intro').text() + '  ' + $it.find('.accordion__block_address').text();
+			var $btn = $it.closest('.service__form_block').find('> button.accordion');
 			$btn.addClass('selected').text(txt).data('id', id).removeClass('active');
 			$btn.next('.panel').hide();
 			loadSlots();
@@ -126,10 +127,9 @@ $(document).ready(function () {
 		});
 		$(document).on('click', '.service__services .accordion__block_item', function (e) {
 			e.preventDefault();
-			var $it = $(this),
-				id = $it.data('id'),
-				txt = $it.find('.accordion__block_item_intro').text() + '  ' + $it.find('.accordion__block_item_address').text(),
-				$btn = $it.closest('.service__form_block').find('> button.accordion');
+			var $it = $(this), id = $it.data('id');
+			var txt = $it.find('.accordion__block_item_intro').text() + '  ' + $it.find('.accordion__block_item_address').text();
+			var $btn = $it.closest('.service__form_block').find('> button.accordion');
 			$btn.addClass('selected').text(txt).data('id', id).removeClass('active');
 			$btn.next('.panel').hide();
 			loadSlots();
@@ -137,10 +137,9 @@ $(document).ready(function () {
 		});
 		$(document).on('click', '.service__masters .accordion__block_item', function (e) {
 			e.preventDefault();
-			var $it = $(this),
-				id = $it.data('id'),
-				txt = $it.find('.accordion__block_item_intro').text(),
-				$btn = $it.closest('.service__form_block').find('> button.accordion');
+			var $it = $(this), id = $it.data('id');
+			var txt = $it.find('.accordion__block_item_intro').text();
+			var $btn = $it.closest('.service__form_block').find('> button.accordion');
 			$btn.addClass('selected').text(txt).data('id', id).removeClass('active');
 			$btn.next('.panel').hide();
 			loadSlots();
@@ -160,16 +159,16 @@ $(document).ready(function () {
 		var salonId = $('.service__salons > button.selected').data('id') || null;
 		var serviceId = $('.service__services > button.selected').data('id') || null;
 		var specialistId = $('.service__masters > button.selected').data('id') || null;
-		var slotId = $('.time__elems_btn.active').data('slot-id') || null;
+		var time = $('.time__elems_btn.active').text() || null;
 		var date = $('#datepickerHere').val() || new Date().toISOString().split('T')[0];
 
-		$.getJSON('/api/filter/', {
-			salon: salonId,
-			service: serviceId,
-			specialist: specialistId,
-			slot_id: slotId,
-			date: date
-		}, function (data) {
+		var params = new URLSearchParams({ date });
+		if (salonId) params.append('salon', salonId);
+		if (serviceId) params.append('service', serviceId);
+		if (specialistId) params.append('specialist', specialistId);
+		if (time) params.append('time', time);
+
+		$.getJSON(`/api/filter/?${params.toString()}`, function (data) {
 			applyFilters(data, serviceId);
 		});
 	}
@@ -222,10 +221,12 @@ $(document).ready(function () {
 		const salonId = $('.service__salons > button.selected').data('id');
 		const serviceId = $('.service__services > button.selected').data('id');
 		const specialistId = $('.service__masters > button.selected').data('id');
+
 		if (!slotId || !salonId || !serviceId || !specialistId) {
 			alert('Пожалуйста, выберите все поля.');
 			return;
 		}
+
 		$.post('/api/book/', {
 			slot_id: slotId,
 			salon_id: salonId,
