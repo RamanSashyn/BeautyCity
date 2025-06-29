@@ -10,13 +10,16 @@ from .models import (
 
 @admin.register(Salon)
 class SalonAdmin(admin.ModelAdmin):
-    list_display = ('photo_preview', 'name', 'address', 'phone_number')
-    search_fields = ('name', 'address')
-    readonly_fields = ('photo_preview',)
+    list_display    = ('photo_preview', 'name', 'address', 'phone_number', 'lat', 'lon')
+    search_fields   = ('name', 'address')
+    readonly_fields = ('photo_preview', 'lat', 'lon')
 
     def photo_preview(self, obj):
         if obj.photo:
-            return format_html('<img src="{}" width="50" height="50" style="object-fit: cover; border-radius: 5px;" />', obj.photo.url)
+            return format_html(
+                '<img src="{}" width="50" height="50" style="object-fit: cover; border-radius: 5px;" />',
+                obj.photo.url
+            )
         return "Нет фото"
     photo_preview.short_description = "Фото"
 

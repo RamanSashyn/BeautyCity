@@ -2461,10 +2461,23 @@ btn
 		order: 1;
 	}
 
+<<<<<<< HEAD
+=======
+	.contacts__map {
+		max-width: 598px;
+		width: 100%;
+		height: 400px;
+		overflow: hidden;
+		margin-bottom: 20px;
+	}
+
+>>>>>>> 17b455c (Подключил карту)
 	.contacts__locationBlock {
-		display: flex;
-		justify-content: space-between;
-		margin-top: 23px;
+		margin-bottom: 20px;
+	}
+
+	.contacts__location {
+		margin-bottom: 15px;
 	}
 
 	.contacts__block {

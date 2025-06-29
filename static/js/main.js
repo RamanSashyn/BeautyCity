@@ -1,57 +1,37 @@
 $(document).ready(function () {
 	$('.service__form_block .panel').hide();
-
 	$('.service__services > .panel > button.accordion').filter(function () {
 		return !$(this).text().trim();
 	}).remove();
 
-	var $salonsSlider = $('.salonsSlider');
-	var salonCount = $salonsSlider.children().length;
-	var salonSlidesToShow = salonCount >= 4 ? 4 : salonCount;
-	$salonsSlider.slick({
-		arrows: salonCount > salonSlidesToShow,
-		slidesToShow: salonSlidesToShow,
-		infinite: salonCount > salonSlidesToShow,
-		prevArrow: $('.salons .leftArrow'),
-		nextArrow: $('.salons .rightArrow'),
+	function initSlider(selector, arrowContainer, extraSettings = {}) {
+		const $slider = $(selector);
+		const count = $slider.children().length;
+		const show = count >= 4 ? 4 : count;
+		$slider.slick({
+			arrows: count > show,
+			slidesToShow: show,
+			infinite: count > show,
+			prevArrow: $(`${arrowContainer} .leftArrow`),
+			nextArrow: $(`${arrowContainer} .rightArrow`),
+			responsive: [
+				{ breakpoint: 1199, settings: { slidesToShow: 3 } },
+				{ breakpoint: 991, settings: { slidesToShow: 2, centerMode: true } },
+				{ breakpoint: 575, settings: { slidesToShow: 1 } }
+			],
+			...extraSettings
+		});
+	}
+
+	initSlider('.salonsSlider', '.salons', {
 		responsive: [
-			{ breakpoint: 991, settings: { centerMode: salonCount > 2, slidesToShow: salonCount >= 2 ? 2 : salonCount } },
-			{ breakpoint: 575, settings: { slidesToShow: 1 } }
-		]
-	});
-	$('.servicesSlider').slick({
-		arrows: true,
-		slidesToShow: 4,
-		prevArrow: $('.services .leftArrow'),
-		nextArrow: $('.services .rightArrow'),
-		responsive: [
-			{ breakpoint: 1199, settings: { slidesToShow: 3 } },
 			{ breakpoint: 991, settings: { centerMode: true, slidesToShow: 2 } },
 			{ breakpoint: 575, settings: { slidesToShow: 1 } }
 		]
 	});
-	$('.mastersSlider').slick({
-		arrows: true,
-		slidesToShow: 4,
-		prevArrow: $('.masters .leftArrow'),
-		nextArrow: $('.masters .rightArrow'),
-		responsive: [
-			{ breakpoint: 1199, settings: { slidesToShow: 3 } },
-			{ breakpoint: 991, settings: { slidesToShow: 2 } },
-			{ breakpoint: 575, settings: { slidesToShow: 1 } }
-		]
-	});
-	$('.reviewsSlider').slick({
-		arrows: true,
-		slidesToShow: 4,
-		prevArrow: $('.reviews .leftArrow'),
-		nextArrow: $('.reviews .rightArrow'),
-		responsive: [
-			{ breakpoint: 1199, settings: { slidesToShow: 3 } },
-			{ breakpoint: 991, settings: { slidesToShow: 2 } },
-			{ breakpoint: 575, settings: { slidesToShow: 1 } }
-		]
-	});
+	initSlider('.servicesSlider', '.services');
+	initSlider('.mastersSlider', '.masters');
+	initSlider('.reviewsSlider', '.reviews');
 
 	$('.header__mobMenu').click(() => $('#mobMenu').show());
 	$('.mobMenuClose').click(() => $('#mobMenu').hide());
@@ -60,30 +40,20 @@ $(document).ready(function () {
 		const salonId = $('.service__salons > button.selected').data('id') || '';
 		const specialistId = $('.service__masters > button.selected').data('id') || '';
 		const serviceId = $('.service__services > button.selected').data('id') || '';
-		const date = selectedDate
-			|| $('#datepickerHere').val()
-			|| new Date().toISOString().split('T')[0];
-
+		const date = selectedDate || $('#datepickerHere').val() || new Date().toISOString().split('T')[0];
 		const params = new URLSearchParams({ date });
 		if (salonId) params.append('salon_id', salonId);
 		if (specialistId) params.append('specialist_id', specialistId);
 		if (serviceId) params.append('service_id', serviceId);
-
-		$.getJSON(`/api/slots-by-specialist/?${params.toString()}`, function (slots) {
+		$.getJSON(`/api/slots-by-specialist/?${params}`, function (slots) {
 			const sections = {
 				morning: $('.time__items').eq(0).find('.time__elems_elem').empty(),
 				day: $('.time__items').eq(1).find('.time__elems_elem').empty(),
 				evening: $('.time__items').eq(2).find('.time__elems_elem').empty(),
 			};
 			slots.forEach(slot => {
-				const btn = $('<button>')
-					.addClass('time__elems_btn')
-					.attr('type', 'button')
-					.attr('data-slot-id', slot.id)
-					.text(slot.time);
-				if (slot.hour < 12) sections.morning.append(btn);
-				else if (slot.hour < 18) sections.day.append(btn);
-				else sections.evening.append(btn);
+				const btn = $('<button>').addClass('time__elems_btn').attr({ type: 'button', 'data-slot-id': slot.id }).text(slot.time);
+				(slot.hour < 12 ? sections.morning : slot.hour < 18 ? sections.day : sections.evening).append(btn);
 			});
 		});
 	}
@@ -96,57 +66,29 @@ $(document).ready(function () {
 		}
 	});
 
-	$(document).on('click', '.service__form_block > button.accordion', function (e) {
+	$(document).on('click', '.service__form_block > button.accordion, .service__services > .panel > button.accordion', function (e) {
 		e.preventDefault();
-		var $btn = $(this), $panel = $btn.next('.panel');
-		$panel.slideToggle(200);
-		$btn.toggleClass('active');
-		if ($btn.closest('.service__services').length) updateCombinations();
-	});
-	$(document).on('click', '.service__services > .panel > button.accordion', function (e) {
-		e.preventDefault();
-		var $btn = $(this), $panel = $btn.next('.panel');
-		$panel.slideToggle(200);
-		$btn.toggleClass('active');
+		$(this).next('.panel').slideToggle(200);
+		$(this).toggleClass('active');
+		if ($(this).closest('.service__services').length) updateCombinations();
 	});
 
-	var salonBlocks = $('.service__salons .accordion__block').toArray();
-	var serviceItems = $('.service__services .accordion__block_item').toArray();
-	var masterItems = $('.service__masters .accordion__block_item').toArray();
-
-	function bindSelection() {
-		$(document).on('click', '.service__salons .accordion__block', function (e) {
+	function handleSelection(blockSelector, getText) {
+		$(document).on('click', blockSelector, function (e) {
 			e.preventDefault();
-			var $it = $(this), id = $it.data('id');
-			var txt = $it.find('.accordion__block_intro').text() + '  ' + $it.find('.accordion__block_address').text();
-			var $btn = $it.closest('.service__form_block').find('> button.accordion');
-			$btn.addClass('selected').text(txt).data('id', id).removeClass('active');
-			$btn.next('.panel').hide();
-			loadSlots();
-			updateCombinations();
-		});
-		$(document).on('click', '.service__services .accordion__block_item', function (e) {
-			e.preventDefault();
-			var $it = $(this), id = $it.data('id');
-			var txt = $it.find('.accordion__block_item_intro').text() + '  ' + $it.find('.accordion__block_item_address').text();
-			var $btn = $it.closest('.service__form_block').find('> button.accordion');
-			$btn.addClass('selected').text(txt).data('id', id).removeClass('active');
-			$btn.next('.panel').hide();
-			loadSlots();
-			updateCombinations();
-		});
-		$(document).on('click', '.service__masters .accordion__block_item', function (e) {
-			e.preventDefault();
-			var $it = $(this), id = $it.data('id');
-			var txt = $it.find('.accordion__block_item_intro').text();
-			var $btn = $it.closest('.service__form_block').find('> button.accordion');
+			const $it = $(this), id = $it.data('id');
+			const txt = getText($it);
+			const $btn = $it.closest('.service__form_block').find('> button.accordion');
 			$btn.addClass('selected').text(txt).data('id', id).removeClass('active');
 			$btn.next('.panel').hide();
 			loadSlots();
 			updateCombinations();
 		});
 	}
-	bindSelection();
+
+	handleSelection('.service__salons .accordion__block', $it => `${$it.find('.accordion__block_intro').text()}  ${$it.find('.accordion__block_address').text()}`);
+	handleSelection('.service__services .accordion__block_item', $it => `${$it.find('.accordion__block_item_intro').text()}  ${$it.find('.accordion__block_item_address').text()}`);
+	handleSelection('.service__masters .accordion__block_item', $it => $it.find('.accordion__block_item_intro').text());
 
 	$(document).on('click', '.time__items .time__elems_btn', function (e) {
 		e.preventDefault();
@@ -156,43 +98,40 @@ $(document).ready(function () {
 	});
 
 	function updateCombinations() {
-		var salonId = $('.service__salons > button.selected').data('id') || null;
-		var serviceId = $('.service__services > button.selected').data('id') || null;
-		var specialistId = $('.service__masters > button.selected').data('id') || null;
-		var time = $('.time__elems_btn.active').text() || null;
-		var date = $('#datepickerHere').val() || new Date().toISOString().split('T')[0];
-
-		var params = new URLSearchParams({ date });
-		if (salonId) params.append('salon', salonId);
-		if (serviceId) params.append('service', serviceId);
-		if (specialistId) params.append('specialist', specialistId);
+		const getId = sel => $(`.service__${sel} > button.selected`).data('id') || null;
+		const time = $('.time__elems_btn.active').text() || null;
+		const date = $('#datepickerHere').val() || new Date().toISOString().split('T')[0];
+		const params = new URLSearchParams({ date });
+		['salon', 'service', 'specialist'].forEach(key => {
+			const id = getId(key);
+			if (id) params.append(key, id);
+		});
 		if (time) params.append('time', time);
+		$.getJSON(`/api/filter/?${params}`, data => applyFilters(data, getId('service')));
+	}
 
-		$.getJSON(`/api/filter/?${params.toString()}`, function (data) {
-			applyFilters(data, serviceId);
+	function toggleVisibility($items, allowedIds) {
+		$items.each((_, el) => {
+			const $el = $(el);
+			$el.toggle(allowedIds.includes($el.data('id')));
 		});
 	}
 
 	function applyFilters(data, serviceId) {
-		var allowedSalons = data.salons.map(o => o.id);
-		var allowedServices = data.services.map(o => o.id);
-		var allowedSpecialists = data.specialists.map(o => o.id);
+		toggleVisibility($('.service__salons .accordion__block'), data.salons.map(o => o.id));
+		toggleVisibility($('.service__services .accordion__block_item'), data.services.map(o => o.id));
+		toggleVisibility($('.service__masters .accordion__block_item'), data.specialists.map(o => o.id));
 
-		salonBlocks.forEach(el => $(el)[allowedSalons.includes($(el).data('id')) ? 'show' : 'hide']());
-		serviceItems.forEach(el => $(el)[allowedServices.includes($(el).data('id')) ? 'show' : 'hide']());
-		masterItems.forEach(el => $(el)[allowedSpecialists.includes($(el).data('id')) ? 'show' : 'hide']());
-
+		const $accordionBtns = $('.service__services > .panel > button.accordion');
 		if (!serviceId) {
-			$('.service__services > .panel > button.accordion').show();
+			$accordionBtns.show();
 		} else {
-			$('.service__services > .panel > button.accordion').each(function () {
-				var hasAny = $(this).next('.panel').find('.accordion__block_item:visible').length;
-				$(this)[hasAny ? 'show' : 'hide']();
+			$accordionBtns.each(function () {
+				const hasAny = $(this).next('.panel').find('.accordion__block_item:visible').length;
+				$(this).toggle(hasAny);
 			});
 		}
-		$('.service__services > .panel > button.accordion').filter(function () {
-			return !$(this).text().trim();
-		}).remove();
+		$accordionBtns.filter(function () { return !$(this).text().trim(); }).remove();
 	}
 
 	loadSlots();
@@ -205,40 +144,50 @@ $(document).ready(function () {
 			$('#authModal').arcticmodal();
 		}
 	});
-	$('.rewiewPopupOpen').click(e => { e.preventDefault(); $('#reviewModal').arcticmodal(); });
-	$('.payPopupOpen').click(e => { e.preventDefault(); $('#paymentModal').arcticmodal(); });
-	$('.tipsPopupOpen').click(e => { e.preventDefault(); $('#tipsModal').arcticmodal(); });
+
+	[
+		{ sel: '.rewiewPopupOpen', modal: '#reviewModal' },
+		{ sel: '.payPopupOpen', modal: '#paymentModal' },
+		{ sel: '.tipsPopupOpen', modal: '#tipsModal' }
+	].forEach(({ sel, modal }) => $(sel).click(e => { e.preventDefault(); $(modal).arcticmodal(); }));
+
 	$('.authPopup__form').submit(() => { $('#confirmModal').arcticmodal(); return true; });
 
 	$(document).on('click', '.servicePage', function () {
-		if ($('.time__elems_btn.active').length > 0 && $('.service__form_block > button.selected').length > 0) {
+		if ($('.time__elems_btn.active').length && $('.service__form_block > button.selected').length) {
 			$('.time__btns_next').addClass('active');
 		}
 	});
+
 	$(document).on('click', '.time__btns_next.active', function (e) {
 		e.preventDefault();
+		const getId = sel => $(`.service__${sel} > button.selected`).data('id');
 		const slotId = $('.time__elems_btn.active').data('slot-id');
-		const salonId = $('.service__salons > button.selected').data('id');
-		const serviceId = $('.service__services > button.selected').data('id');
-		const specialistId = $('.service__masters > button.selected').data('id');
-
-		if (!slotId || !salonId || !serviceId || !specialistId) {
-			alert('Пожалуйста, выберите все поля.');
-			return;
-		}
-
+		const salonId = getId('salons'), serviceId = getId('services'), specialistId = getId('masters');
+		if (!slotId || !salonId || !serviceId || !specialistId) return alert('Пожалуйста, выберите все поля.');
 		$.post('/api/book/', {
 			slot_id: slotId,
 			salon_id: salonId,
 			service_id: serviceId,
 			specialist_id: specialistId,
 			csrfmiddlewaretoken: $('[name=csrfmiddlewaretoken]').val()
-		}).done(response => {
-			if (response.success && response.redirect_url) {
-				window.location.href = response.redirect_url;
-			} else {
-				alert('Ошибка при записи. Попробуйте снова.');
-			}
+		}).done(res => {
+			if (res.success && res.redirect_url) window.location.href = res.redirect_url;
+			else alert('Ошибка при записи. Попробуйте снова.');
 		});
+	});
+
+	ymaps.ready(function () {
+		if (!document.getElementById('map')) return;
+		const points = window.mapPoints || [];
+		const center = points.length ? [points[0].lat, points[0].lon] : [59.94, 30.32];
+		const myMap = new ymaps.Map('map', {
+			center,
+			zoom: 12,
+			controls: ['zoomControl', 'fullscreenControl']
+		});
+		points.forEach(pt => myMap.geoObjects.add(
+			new ymaps.Placemark([pt.lat, pt.lon], { hintContent: pt.hint }, { preset: 'islands#redDotIcon' })
+		));
 	});
 });

@@ -1,4 +1,8 @@
 import re
+from urllib.parse import urlencode
+
+import requests
+from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_GET
@@ -7,18 +11,48 @@ from django.db.models import Count
 from django.utils import timezone
 from datetime import datetime, timedelta, time
 from django.utils.dateparse import parse_date
+from django.db import transaction
+from django.urls import reverse
+from collections import defaultdict
 
-from .models import Client, Salon, Service, Specialist, Category, TimeSlot, Appointment
+
+from .models import (
+    Client, Salon, Service, Specialist,
+    Category, TimeSlot, Appointment
+)
 
 
 def index_view(request):
-    services = Service.objects.exclude(photo='')
-    salons = Salon.objects.all()
+    services    = Service.objects.exclude(photo='')
+    salons      = Salon.objects.all()
     specialists = Specialist.objects.exclude(photo='')
-    return render(request, "index.html", {
-        "salons": salons,
-        "services": services,
-        "specialists": specialists,
+
+    map_salons = salons.filter(lat__isnull=False, lon__isnull=False)
+
+    static_map_url = None
+    if map_salons.exists():
+        pts = '~'.join(f"{s.lon},{s.lat},pm2rdm" for s in map_salons)
+        params = {
+            'l':      'map',
+            'size':   '650,400',
+            'lang':   'ru_RU',
+            'pt':     pts,
+            'apikey': settings.YANDEX_STATICMAP_KEY,
+        }
+        static_map_url = 'https://static-maps.yandex.ru/1.x/?' + urlencode(params)
+
+    points = [
+        {'lat': s.lat, 'lon': s.lon, 'hint': s.name}
+        for s in map_salons
+    ]
+
+    return render(request, 'index.html', {
+        'salons':           salons,
+        'services':         services,
+        'specialists':      specialists,
+        'static_map_url':   static_map_url,
+        'points':           points, 
+        'YANDEX_GEOCODE_KEY': settings.YANDEX_GEOCODE_KEY,
     })
 
 
@@ -39,6 +73,24 @@ def service_view(request):
         slot_id      = request.POST.get('slot_id')
         client_phone = request.POST.get('phone')
         service_id   = request.POST.get('service_id')
+
+        if not all([slot_id, client_phone, service_id]):
+            return render(request, 'service.html', {
+                'salons': salons, 'categories': categories,
+                'specialists': specialists,
+                'slots': slots, 'morning_slots': morning_slots,
+                'day_slots': day_slots, 'evening_slots': evening_slots,
+                'error': 'Пожалуйста, заполните все поля.'
+            })
+
+        if not is_valid_phone(client_phone):
+            return render(request, 'service.html', {
+                'salons': salons, 'categories': categories,
+                'specialists': specialists,
+                'slots': slots, 'morning_slots': morning_slots,
+                'day_slots': day_slots, 'evening_slots': evening_slots,
+                'error': 'Введите корректный номер телефона в формате +7XXXXXXXXXX'
+            })
 
         slot = get_object_or_404(TimeSlot, id=slot_id, is_booked=False)
         client, _ = Client.objects.get_or_create(phone=client_phone)
@@ -71,7 +123,6 @@ def service_view(request):
         'day_slots': day_slots,
         'evening_slots': evening_slots,
     })
-
 
 @require_GET
 def filter_entities(request):
@@ -117,13 +168,44 @@ def filter_entities(request):
                 time=time_filter,
                 is_booked=False
             )
+
             if salon_id:
                 slots_time = slots_time.filter(salon_id=salon_id)
             if service_id:
                 slots_time = slots_time.filter(specialist__services__id=service_id)
 
+                service = get_object_or_404(Service, id=service_id)
+                duration = timedelta(minutes=service.duration_minutes)
+                tz = timezone.get_current_timezone()
+
+                valid_ids = []
+                for slot in slots_time:
+                    start_naive = datetime.combine(date_filter, slot.time)
+                    start = timezone.make_aware(start_naive, tz)
+                    end = start + duration
+
+                    if end.date() != date_filter:
+                        continue
+
+                    appts = Appointment.objects.filter(
+                        specialist_id=slot.specialist_id,
+                        date_time_start__date=date_filter
+                    ).values_list('date_time_start', 'date_time_end')
+
+                    overlap = False
+                    for a_start, a_end in appts:
+                        if a_start < end and a_end > start:
+                            overlap = True
+                            break
+
+                    if not overlap:
+                        valid_ids.append(slot.id)
+
+                slots_time = slots_time.filter(id__in=valid_ids)
+
             salon_ids      = slots_time.values_list('salon_id', flat=True).distinct()
             specialist_ids = slots_time.values_list('specialist_id', flat=True).distinct()
+
             services_qs    = Service.objects.filter(specialist__id__in=specialist_ids).distinct()
             salons_qs      = Salon.objects.filter(id__in=salon_ids)
             specialists_qs = Specialist.objects.filter(id__in=specialist_ids)
@@ -191,15 +273,17 @@ def profile_view(request):
     client_id = request.session.get("client_id")
     if not client_id:
         return redirect("/")
-    client = get_object_or_404(Client, id=client_id)
-    if request.method == "POST":
-        client.name     = request.POST.get("name", "")
-        client.gender   = request.POST.get("gender", "")
-        client.birthday = request.POST.get("birthday", "")
-        client.save()
-        return redirect("/")
-    return render(request, "profile.html", {"client": client})
 
+    client = get_object_or_404(Client, id=client_id)
+
+    appointments = Appointment.objects.filter(
+        client=client
+    ).select_related('specialist', 'service', 'salon').order_by('-date_time_start')
+
+    return render(request, "profile.html", {
+        "client": client,
+        "appointments": appointments,
+    })
 
 def logout_view(request):
     request.session.flush()
@@ -219,23 +303,40 @@ def book_appointment(request):
             'service_id':    request.POST.get('service_id'),
             'specialist_id': request.POST.get('specialist_id'),
         }
-        return JsonResponse({'success': True, 'redirect_url': '/api/service-finally/'})
+        redirect_url = reverse('service_finally')
+        return JsonResponse({'success': True, 'redirect_url': redirect_url})
     return JsonResponse({'success': False, 'error': 'Invalid method'})
 
 
+@transaction.atomic
 def service_finally_view(request):
     data = request.session.get('booking_data')
     if not data:
         return redirect('service_view')
-    slot       = get_object_or_404(TimeSlot,   id=data['slot_id'],   is_booked=False)
-    salon      = get_object_or_404(Salon,      id=data['salon_id'])
-    service    = get_object_or_404(Service,    id=data['service_id'])
+
+    try:
+        slot = TimeSlot.objects.select_for_update().get(id=data['slot_id'], is_booked=False)
+    except TimeSlot.DoesNotExist:
+        return redirect('service_view')
+
+    salon = get_object_or_404(Salon, id=data['salon_id'])
+    service = get_object_or_404(Service, id=data['service_id'])
     specialist = get_object_or_404(Specialist, id=data['specialist_id'])
+
+    if not specialist.services.filter(id=service.id).exists():
+        return render(request, 'serviceFinally.html', {
+            'error':      'Указанный специалист не оказывает выбранную услугу.',
+            'service':    service,
+            'salon':      salon,
+            'specialist': specialist,
+            'slot':       slot,
+        })
 
     if request.method == 'POST':
         name     = request.POST.get('fname')
         phone    = request.POST.get('tel')
         question = request.POST.get('contactsTextarea')
+
         if not name or not phone:
             return render(request, 'serviceFinally.html', {
                 'error':      'Введите имя и телефон',
@@ -249,18 +350,28 @@ def service_finally_view(request):
                 'specialist': specialist, 'slot': slot,
                 'name': name, 'phone': phone, 'question': question
             })
+
         client, _ = Client.objects.get_or_create(phone=phone)
         client.name = name
         client.save()
+
         start = datetime.combine(slot.date, slot.time)
         end   = start + timedelta(minutes=service.duration_minutes)
+
         appointment = Appointment.objects.create(
-            client=client, specialist=specialist, service=service,
-            salon=salon, date_time_start=start,
-            date_time_end=end, status='booked', source='site'
+            client=client,
+            specialist=specialist,
+            service=service,
+            salon=salon,
+            date_time_start=start,
+            date_time_end=end,
+            status='booked',
+            source='site'
         )
+
         slot.is_booked = True
         slot.save()
+
         del request.session['booking_data']
         return redirect(f'/api/service-finally/{appointment.id}/')
 
@@ -346,3 +457,18 @@ def get_slots_by_specialist(request):
             })
 
     return JsonResponse(result, safe=False)
+
+def settings_view(request):
+    client_id = request.session.get("client_id")
+    if not client_id:
+        return redirect("/")
+    client = get_object_or_404(Client, id=client_id)
+
+    if request.method == "POST":
+        client.name     = request.POST.get("name", "")
+        client.gender   = request.POST.get("gender", "")
+        client.birthday = request.POST.get("birthday", "")
+        client.save()
+        return redirect("settings")
+
+    return render(request, "settings.html", {"client": client})

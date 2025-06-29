@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Настройки профиля{% endblock %}
+{% block body_class %}notesPage{% endblock %}
+
+{% block content %}
+<section id="settings">
+    <div class="container">
+        <div class="notes">
+            <div class="row">
+                <div class="col-md-2">
+                    {% include "partials/account_sidebar.html" %}
+                </div>
+                <div class="col-md-12 col-lg-7">
+                    <div class="notes__main">
+                        <div class="notes__title">Настройки профиля</div>
+                        <hr class="hr">
+                    </div>
+
+                    <form method="post" class="profile__form">
+                        {% csrf_token %}
+                        <div class="profile__group">
+                            <label class="profile__label">Имя:</label>
+                            <input type="text" name="name" value="{{ client.name }}" required class="profile__input">
+                        </div>
+                        <div class="profile__group">
+                            <label class="profile__label">Дата рождения:</label>
+                            <input type="date" name="birthday" value="{{ client.birthday|date:'Y-m-d' }}"
+                                class="profile__input">
+                        </div>
+                        <div class="profile__group">
+                            <label class="profile__label">Пол:</label>
+                            <select name="gender" class="profile__input">
+                                <option value="">Не выбрано</option>
+                                <option value="male" {% if client.gender == "male" %}selected{% endif %}>Мужской</option>
+                                <option value="female" {% if client.gender == "female" %}selected{% endif %}>Женский
+                                </option>
+                            </select>
+                        </div>
+                        <div class="profile__btns fic" style="margin-top: 15px;">
+                            <button type="submit" class="profile__btn">Сохранить</button>
+                            <a href="{% url 'logout' %}" class="profile__btn profile__btn_exit">Выйти</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
