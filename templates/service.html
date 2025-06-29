@@ -89,35 +89,37 @@
 							<div class="time__items">
 								<h3>Утро</h3>
 								<div class="time__elems_elem fic">
-  									{% for slot in morning_slots %}
-    									<button type="button" class="time__elems_btn" data-slot-id="{{ slot.id }}">
-      										{{ slot.time|time:"H:i" }}
-    									</button>
-  									{% empty %}
-    									<p>Свободных слотов нет</p>
-  									{% endfor %}
+									{% for slot in morning_slots %}
+									<button type="button" class="time__elems_btn" data-slot-id="{{ slot.id }}">
+										{{ slot.time|time:"H:i" }}
+									</button>
+									{% empty %}
+									<p>Свободных слотов нет</p>
+									{% endfor %}
 								</div>
 							</div>
 							<div class="time__items">
-								<h3>День</h3>								<div class="time__elems_elem fic">
-  									{% for slot in day_slots %}
-    									<button type="button" class="time__elems_btn" data-slot-id="{{ slot.id }}">
-      										{{ slot.time|time:"H:i" }}
-    									</button>
-  									{% empty %}
-    									<p>Свободных слотов нет</p>
-  									{% endfor %}
+								<h3>День</h3>
+								<div class="time__elems_elem fic">
+									{% for slot in day_slots %}
+									<button type="button" class="time__elems_btn" data-slot-id="{{ slot.id }}">
+										{{ slot.time|time:"H:i" }}
+									</button>
+									{% empty %}
+									<p>Свободных слотов нет</p>
+									{% endfor %}
 								</div>
 							</div>
 							<div class="time__items">
-								<h3>Вечер</h3>								<div class="time__elems_elem fic">
-  									{% for slot in evening_slots %}
-    									<button type="button" class="time__elems_btn" data-slot-id="{{ slot.id }}">
-      										{{ slot.time|time:"H:i" }}
-    									</button>
-  									{% empty %}
-    									<p>Свободных слотов нет</p>
-  									{% endfor %}
+								<h3>Вечер</h3>
+								<div class="time__elems_elem fic">
+									{% for slot in evening_slots %}
+									<button type="button" class="time__elems_btn" data-slot-id="{{ slot.id }}">
+										{{ slot.time|time:"H:i" }}
+									</button>
+									{% empty %}
+									<p>Свободных слотов нет</p>
+									{% endfor %}
 								</div>
 							</div>
 						</div>
@@ -128,7 +130,9 @@
 				<div class="row">
 					<div class="col-md-12">
 						<button class="time__btns_next">Далее</button>
-						<button class="time__btns_home">На главную</button>
+						<button type="button" class="time__btns_home btn btn-secondary" onclick="window.location='/'">
+							На главную
+						</button>
 					</div>
 				</div>
 			</div>
