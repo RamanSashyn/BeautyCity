@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Count
 from django.utils import timezone
 from datetime import datetime, timedelta, time
+from django.utils.timezone import now
 from django.utils.dateparse import parse_date
 from django.db import transaction
 from django.urls import reverse
@@ -133,6 +134,8 @@ def filter_entities(request):
     specialist_id = request.GET.get('specialist')
     time_str      = request.GET.get('time')
 
+    now_dt = timezone.now()
+
     date_filter = parse_date(date_str) if date_str else None
     if not date_filter and date_str:
         try:
@@ -143,11 +146,15 @@ def filter_entities(request):
         date_filter = timezone.localdate()
 
     if slot_id:
-        slot = TimeSlot.objects.filter(
+        slot_qs = TimeSlot.objects.filter(
             id=slot_id,
             date=date_filter,
             is_booked=False
-        ).select_related('salon', 'specialist').first()
+        )
+        if date_filter == now_dt.date():
+            slot_qs = slot_qs.filter(time__gt=now_dt.time())
+
+        slot = slot_qs.select_related('salon', 'specialist').first()
         if slot:
             services_for_spec = slot.specialist.services.all()
             return JsonResponse({
@@ -168,6 +175,10 @@ def filter_entities(request):
                 time=time_filter,
                 is_booked=False
             )
+            if date_filter == now_dt.date() and time_filter <=now_dt.time():
+                return JsonResponse({
+                    "salons": [], "services": [], "specialists": []
+                })
 
             if salon_id:
                 slots_time = slots_time.filter(salon_id=salon_id)
