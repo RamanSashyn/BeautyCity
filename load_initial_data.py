@@ -35,7 +35,7 @@ def load_salons():
             with open(photo_file, "rb") as f:
                 salon.photo.save(photo_file.name, File(f), save=True)
         else:
-            print(f"⚠ Нет файла изображения салона: {photo_file}")
+            print(f"Нет файла изображения салона: {photo_file}")
 
         print(f'✔ {"Создан" if created else "Уже есть"} салон: {salon.name}')
 
@@ -43,7 +43,7 @@ def load_salons():
 def load_services_with_categories():
     path = DATA_DIR / "services_by_category.json"
     if not path.exists():
-        print("⚠ Файл services_by_category.json не найден")
+        print(" Файл services_by_category.json не найден")
         return
 
     with open(path, encoding="utf-8") as f:
@@ -87,7 +87,7 @@ def load_services_with_categories():
                     with open(photo_file, "rb") as f:
                         service.photo.save(photo_file.name, File(f), save=True)
                 else:
-                    print(f"⚠ Нет файла изображения услуги: {photo_file}")
+                    print(f" Нет файла изображения услуги: {photo_file}")
 
             service.save()
             print(f'✔ {"Создана" if created else "Обновлена"} услуга: {name} → {category_name}')
@@ -101,7 +101,7 @@ def load_specialists():
         salon_name = item.get("salon")
         salon = Salon.objects.filter(name=salon_name).first()
         if not salon:
-            print(f"⚠ Пропущен {item['name']}: салон '{salon_name}' не найден")
+            print(f"Пропущен {item['name']}: салон '{salon_name}' не найден")
             continue
 
         specialist, created = Specialist.objects.get_or_create(
@@ -119,7 +119,7 @@ def load_specialists():
             with open(photo_file, "rb") as f:
                 specialist.photo.save(photo_file.name, File(f), save=True)
         else:
-            print(f"⚠ Нет файла фото специалиста: {photo_file}")
+            print(f"Нет файла фото специалиста: {photo_file}")
 
         print(f'✔ {"Создан" if created else "Уже есть"} специалист: {specialist.name}')
 

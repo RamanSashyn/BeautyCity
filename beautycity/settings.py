@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import environ
+import dj_database_url 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -57,10 +58,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'beautycity.wsgi.application'
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / env('SQLITE_DB_NAME', default='db.sqlite3'),
-    }
+    'default': dj_database_url.config(default=env('DATABASE_URL'))
 }
 
 LANGUAGE_CODE = env('LANGUAGE_CODE')

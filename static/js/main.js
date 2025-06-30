@@ -8,6 +8,11 @@ $(document).ready(function () {
 		const $slider = $(selector);
 		const count = $slider.children().length;
 		const show = count >= 4 ? 4 : count;
+
+		$slider.on('init', function () {
+			$slider.removeClass('slider-preload');
+		});
+
 		$slider.slick({
 			arrows: count > show,
 			slidesToShow: show,

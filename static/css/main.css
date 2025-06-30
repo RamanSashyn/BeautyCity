@@ -782,9 +782,9 @@ btn
 }
 
 @media (max-width: 768px) {
-  .contacts__map {
-    height: 150px;
-  }
+	.contacts__map {
+		height: 150px;
+	}
 }
 
 /*.contacts__map iframe {
@@ -2461,8 +2461,6 @@ btn
 		order: 1;
 	}
 
-<<<<<<< HEAD
-=======
 	.contacts__map {
 		max-width: 598px;
 		width: 100%;
@@ -2471,7 +2469,6 @@ btn
 		margin-bottom: 20px;
 	}
 
->>>>>>> 17b455c (Подключил карту)
 	.contacts__locationBlock {
 		margin-bottom: 20px;
 	}
@@ -2961,4 +2958,21 @@ btn
 	.popup .contacts__form_iunput {
 		width: 95%
 	}
+
+}
+
+.slider-preload {
+	display: none;
+}
+
+.slick-initialized {
+	display: block !important;
+}
+
+.accountSidebarMobile {
+	padding: 0 15px;
+}
+
+.accountSidebarMobile .accaunt__left {
+	width: 100%;
 }
