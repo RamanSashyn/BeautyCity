@@ -110,6 +110,23 @@ class Client(models.Model):
         return f"Клиент №{self.id} ({self.phone})"
 
 
+class LoginCode(models.Model):
+    """Одноразовый код для входа по телефону. Сам код не хранится, только его хеш."""
+
+    phone = models.CharField("Телефон", max_length=30, db_index=True)
+    code_hash = models.CharField("Хеш кода", max_length=64)
+    ip_address = models.GenericIPAddressField("IP-адрес", null=True, blank=True, db_index=True)
+    attempts = models.PositiveSmallIntegerField("Попыток ввода", default=0)
+    created_at = models.DateTimeField("Создан", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Код входа"
+        verbose_name_plural = "Коды входа"
+
+    def __str__(self):
+        return f"Код для {self.phone} от {self.created_at:%d.%m.%Y %H:%M}"
+
+
 class PromoCode(models.Model):
     code = models.CharField("Промокод", max_length=50, unique=True)
     discount_percent = models.PositiveIntegerField("Скидка (%)")
