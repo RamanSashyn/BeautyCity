@@ -16,6 +16,7 @@
 			</div>
 
 			<form action="#" class="service__form">
+				{% csrf_token %}
 				<input type="hidden" name="slot_id" id="slotId">
 
 				<div class="service__form_block service__salons">

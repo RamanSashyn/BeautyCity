@@ -1,4 +1,13 @@
 $(document).ready(function () {
+	// Django принимает небезопасные запросы (POST и т. п.) только с токеном в заголовке.
+	$.ajaxSetup({
+		beforeSend(xhr, settings) {
+			if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !settings.crossDomain) {
+				xhr.setRequestHeader('X-CSRFToken', document.body.dataset.csrfToken);
+			}
+		}
+	});
+
 	$('.service__form_block .panel').hide();
 	$('.service__services > .panel > button.accordion').filter(function () {
 		return !$(this).text().trim();
@@ -218,12 +227,11 @@ $(document).ready(function () {
 			slot_id: slotId,
 			salon_id: salonId,
 			service_id: serviceId,
-			specialist_id: specialistId,
-			csrfmiddlewaretoken: $('[name=csrfmiddlewaretoken]').val()
+			specialist_id: specialistId
 		}).done(res => {
 			if (res.success && res.redirect_url) window.location.href = res.redirect_url;
 			else alert('Ошибка при записи. Попробуйте снова.');
-		});
+		}).fail(() => alert('Ошибка при записи. Попробуйте снова.'));
 	});
 
 	ymaps.ready(function () {

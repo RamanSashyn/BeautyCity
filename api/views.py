@@ -9,7 +9,6 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_date
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
 from .forms import BookingContactForm, LoginCodeForm, PhoneForm
@@ -233,7 +232,6 @@ def _code_error_response(error):
     return JsonResponse(payload, status=error.status)
 
 
-@csrf_exempt
 def login_view(request):
     """Шаг 1 входа: принимает номер и отправляет на него одноразовый код."""
     if request.method != "POST":
@@ -298,7 +296,6 @@ def logout_view(request):
     return redirect("/")
 
 
-@csrf_exempt
 def book_appointment(request):
     if request.method == "POST":
         request.session["booking_data"] = {
