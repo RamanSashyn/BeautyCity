@@ -89,9 +89,13 @@ class PromoCodeAdmin(admin.ModelAdmin):
 
 @admin.register(Appointment)
 class AppointmentAdmin(admin.ModelAdmin):
-    list_display = ("client", "specialist", "service", "date_time_start", "status")
+    list_display = ("customer", "specialist", "service", "date_time_start", "status")
     list_filter = ("status", "date_time_start")
-    search_fields = ("client__phone",)
+    search_fields = ("client__phone", "guest_phone", "guest_name")
+
+    @admin.display(description="Клиент")
+    def customer(self, obj):
+        return obj.customer
 
 
 class WorkShiftAdminForm(forms.ModelForm):

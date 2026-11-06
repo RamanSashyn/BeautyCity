@@ -18,6 +18,20 @@ class PhoneForm(forms.Form):
     )
 
 
+class BookingContactForm(PhoneForm):
+    """Контакты на последнем шаге записи. Имена полей совпадают с шаблоном."""
+
+    fname = forms.CharField(
+        max_length=150,
+        error_messages={"required": "Введите имя и телефон"},
+    )
+    contactsTextarea = forms.CharField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["tel"].error_messages["required"] = "Введите имя и телефон"
+
+
 class LoginCodeForm(PhoneForm):
     """Номер и одноразовый код, пришедший по SMS."""
 

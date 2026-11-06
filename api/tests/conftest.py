@@ -99,7 +99,7 @@ def make_appointment(specialist, service, salon):
     """Создаёт запись на завтра в 10:00 (или позже, если указан day_offset)."""
 
     def make(client_obj, **kwargs):
-        start = timezone.now().replace(hour=10, minute=0, second=0, microsecond=0)
+        start = timezone.localtime().replace(hour=10, minute=0, second=0, microsecond=0)
         start += timedelta(days=kwargs.pop("day_offset", 1))
         return Appointment.objects.create(
             client=client_obj,

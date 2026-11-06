@@ -13,7 +13,7 @@ from django.utils.dateparse import parse_date
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
-from .forms import LoginCodeForm, PhoneForm
+from .forms import BookingContactForm, LoginCodeForm, PhoneForm
 from .models import Appointment, Category, Client, Salon, Service, Specialist, TimeSlot
 from .services import login_codes
 
@@ -390,61 +390,46 @@ def service_finally_view(request):
     service = get_object_or_404(Service, id=data["service_id"])
     specialist = get_object_or_404(Specialist, id=data["specialist_id"])
 
+    client = _current_client(request)
+    context = {"service": service, "salon": salon, "specialist": specialist, "slot": slot}
+    if client:
+        context.update(name=client.name, phone=client.phone, phone_readonly=True)
+
+    def page(**extra):
+        return render(request, "serviceFinally.html", {**context, **extra})
+
     if not specialist.services.filter(id=service.id).exists():
-        return render(
-            request,
-            "serviceFinally.html",
-            {
-                "error": "Указанный специалист не оказывает выбранную услугу.",
-                "service": service,
-                "salon": salon,
-                "specialist": specialist,
-                "slot": slot,
-            },
-        )
+        return page(error="Указанный специалист не оказывает выбранную услугу.")
 
     if request.method == "POST":
-        name = request.POST.get("fname")
-        phone = request.POST.get("tel")
-        question = request.POST.get("contactsTextarea")
-
-        if not name or not phone:
-            return render(
-                request,
-                "serviceFinally.html",
-                {
-                    "error": "Введите имя и телефон",
-                    "service": service,
-                    "salon": salon,
-                    "specialist": specialist,
-                    "slot": slot,
-                },
-            )
-        if not is_valid_phone(phone):
-            return render(
-                request,
-                "serviceFinally.html",
-                {
-                    "error": "Введите корректный номер телефона в формате +7XXXXXXXXXX",
-                    "service": service,
-                    "salon": salon,
-                    "specialist": specialist,
-                    "slot": slot,
-                    "name": name,
-                    "phone": phone,
-                    "question": question,
-                },
+        data = request.POST.copy()
+        if client:
+            # Вошедший клиент записывается на себя: номер из формы не используется.
+            data["tel"] = client.phone
+        form = BookingContactForm(data)
+        if not form.is_valid():
+            return page(
+                error=_first_error(form),
+                name=data.get("fname", ""),
+                phone=data.get("tel", ""),
+                question=data.get("contactsTextarea", ""),
             )
 
-        client, _ = Client.objects.get_or_create(phone=phone)
-        client.name = name
-        client.save()
+        name = form.cleaned_data["fname"]
+        if client:
+            if client.name != name:
+                client.name = name
+                client.save(update_fields=["name"])
+            owner = {"client": client}
+        else:
+            # Гость не трогает существующих клиентов: контакты лежат в самой записи.
+            owner = {"guest_name": name, "guest_phone": form.cleaned_data["tel"]}
 
         start = datetime.combine(slot.date, slot.time)
         end = start + timedelta(minutes=service.duration_minutes)
 
         appointment = Appointment.objects.create(
-            client=client,
+            **owner,
             specialist=specialist,
             service=service,
             salon=salon,
@@ -461,11 +446,14 @@ def service_finally_view(request):
         request.session["last_appointment_id"] = appointment.id
         return redirect("show_appointment", appointment_id=appointment.id)
 
-    return render(
-        request,
-        "serviceFinally.html",
-        {"service": service, "salon": salon, "specialist": specialist, "slot": slot},
-    )
+    return page()
+
+
+def _current_client(request):
+    client_id = request.session.get("client_id")
+    if client_id is None:
+        return None
+    return Client.objects.filter(id=client_id).first()
 
 
 def _can_view_appointment(request, appointment):

@@ -161,7 +161,16 @@ class TimeSlot(models.Model):
 
 
 class Appointment(models.Model):
-    client = models.ForeignKey(Client, verbose_name="Клиент", on_delete=models.CASCADE)
+    client = models.ForeignKey(
+        Client,
+        verbose_name="Клиент",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        help_text="Пусто для гостевой записи: тогда имя и телефон хранятся в самой записи.",
+    )
+    guest_name = models.CharField("Имя гостя", max_length=150, blank=True)
+    guest_phone = models.CharField("Телефон гостя", max_length=30, blank=True)
     specialist = models.ForeignKey(Specialist, verbose_name="Специалист", on_delete=models.CASCADE)
     service = models.ForeignKey(Service, verbose_name="Услуга", on_delete=models.CASCADE)
     salon = models.ForeignKey(Salon, verbose_name="Салон", on_delete=models.CASCADE)
@@ -190,9 +199,19 @@ class Appointment(models.Model):
         verbose_name_plural = "Записи"
 
     def __str__(self):
-        return f"{self.client} - {self.service} - {self.date_time_start}"
+        return f"{self.customer} - {self.service} - {self.date_time_start}"
+
+    @property
+    def customer(self) -> str:
+        """Кто записан: клиент с профилем или гость, оставивший имя и телефон."""
+        if self.client_id:
+            return str(self.client)
+        return f"{self.guest_name} ({self.guest_phone})"
 
     def clean(self):
+        if not self.client_id and not (self.guest_name and self.guest_phone):
+            raise ValidationError("Укажите клиента или имя и телефон гостя.")
+
         slot_conflict = TimeSlot.objects.filter(
             specialist=self.specialist,
             salon=self.salon,
