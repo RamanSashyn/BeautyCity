@@ -19,6 +19,8 @@ DJANGO_SETTINGS_MODULE = "beautycity.settings_test"
 python_files = ["test_*.py"]
 testpaths = ["api/tests"]
 addopts = "-ra"
+# WhiteNoise предупреждает об отсутствующем STATIC_ROOT: в тестах статика не собирается.
+filterwarnings = ["ignore:No directory at:UserWarning"]
 
 [tool.coverage.run]
 source = ["api"]
