@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Count
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -458,7 +458,8 @@ def service_finally_view(request):
         slot.save()
 
         del request.session["booking_data"]
-        return redirect(f"/api/service-finally/{appointment.id}/")
+        request.session["last_appointment_id"] = appointment.id
+        return redirect("show_appointment", appointment_id=appointment.id)
 
     return render(
         request,
@@ -467,8 +468,19 @@ def service_finally_view(request):
     )
 
 
+def _can_view_appointment(request, appointment):
+    """Запись видит её владелец или тот, кто только что её создал в этой сессии."""
+    if appointment.id == request.session.get("last_appointment_id"):
+        return True
+    client_id = request.session.get("client_id")
+    return client_id is not None and appointment.client_id == client_id
+
+
 def show_appointment(request, appointment_id):
     appointment = get_object_or_404(Appointment, id=appointment_id)
+    if not _can_view_appointment(request, appointment):
+        # Чужая и несуществующая запись неразличимы: ID последовательные.
+        raise Http404
     return render(request, "serviceFinally.html", {"appointment": appointment})
 
 
