@@ -108,3 +108,13 @@ def test_неверные_данные_не_создают_запись(
     assert message in response.content.decode()
     assert not Appointment.objects.exists()
     assert not TimeSlot.objects.get(pk=slot.pk).is_booked
+
+
+def test_прямой_post_на_страницу_услуг_не_создаёт_запись(client, slot, service):
+    response = client.post(
+        "/api/service/",
+        {"slot_id": slot.id, "service_id": service.id, "phone": "+79990001122"},
+    )
+
+    assert response.status_code == 405
+    assert not Appointment.objects.exists()

@@ -1,4 +1,3 @@
-import re
 from datetime import datetime, time, timedelta
 from urllib.parse import urlencode
 
@@ -53,6 +52,7 @@ def index_view(request):
     )
 
 
+@require_GET
 def service_view(request):
     salons = Salon.objects.all()
     categories = (
@@ -68,65 +68,6 @@ def service_view(request):
     morning_slots = slots.filter(time__lt=time(12, 0))
     day_slots = slots.filter(time__gte=time(12, 0), time__lt=time(18, 0))
     evening_slots = slots.filter(time__gte=time(18, 0))
-
-    if request.method == "POST":
-        slot_id = request.POST.get("slot_id")
-        client_phone = request.POST.get("phone")
-        service_id = request.POST.get("service_id")
-
-        if not all([slot_id, client_phone, service_id]):
-            return render(
-                request,
-                "service.html",
-                {
-                    "salons": salons,
-                    "categories": categories,
-                    "specialists": specialists,
-                    "slots": slots,
-                    "morning_slots": morning_slots,
-                    "day_slots": day_slots,
-                    "evening_slots": evening_slots,
-                    "error": "Пожалуйста, заполните все поля.",
-                },
-            )
-
-        if not is_valid_phone(client_phone):
-            return render(
-                request,
-                "service.html",
-                {
-                    "salons": salons,
-                    "categories": categories,
-                    "specialists": specialists,
-                    "slots": slots,
-                    "morning_slots": morning_slots,
-                    "day_slots": day_slots,
-                    "evening_slots": evening_slots,
-                    "error": "Введите корректный номер телефона в формате +7XXXXXXXXXX",
-                },
-            )
-
-        slot = get_object_or_404(TimeSlot, id=slot_id, is_booked=False)
-        client, _ = Client.objects.get_or_create(phone=client_phone)
-        service = get_object_or_404(Service, id=service_id)
-
-        start = datetime.combine(slot.date, slot.time)
-        end = start + timedelta(minutes=service.duration_minutes)
-
-        Appointment.objects.create(
-            client=client,
-            specialist=slot.specialist,
-            service=service,
-            salon=slot.salon,
-            date_time_start=start,
-            date_time_end=end,
-            status="booked",
-        )
-
-        slot.is_booked = True
-        slot.save()
-
-        return redirect("success")
 
     return render(
         request,
@@ -355,10 +296,6 @@ def profile_view(request):
 def logout_view(request):
     request.session.flush()
     return redirect("/")
-
-
-def is_valid_phone(phone):
-    return re.match(r"^\+7\d{10}$", phone)
 
 
 @csrf_exempt
