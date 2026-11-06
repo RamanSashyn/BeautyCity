@@ -40,7 +40,7 @@ def service_finally_view(request):
         context.update(name=client.name, phone=client.phone, phone_readonly=True)
 
     def page(**extra):
-        return render(request, "serviceFinally.html", {**context, **extra})
+        return render(request, "service_finally.html", {**context, **extra})
 
     if not booking.specialist_provides_service(specialist, service):
         return page(error="Указанный специалист не оказывает выбранную услугу.")
@@ -99,4 +99,4 @@ def show_appointment(request, appointment_id):
     if not _can_view_appointment(request, appointment):
         # Чужая и несуществующая запись неразличимы: ID последовательные.
         raise Http404
-    return render(request, "serviceFinally.html", {"appointment": appointment})
+    return render(request, "service_finally.html", {"appointment": appointment})

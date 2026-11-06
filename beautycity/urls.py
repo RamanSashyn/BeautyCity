@@ -13,7 +13,7 @@ urlpatterns = [
     path("admin.html", TemplateView.as_view(template_name="admin.html")),
     path("notes.html", TemplateView.as_view(template_name="notes.html")),
     path("popup.html", TemplateView.as_view(template_name="popup.html")),
-    path("serviceFinally.html", TemplateView.as_view(template_name="serviceFinally.html")),
+    path("serviceFinally.html", TemplateView.as_view(template_name="service_finally.html")),
     path("", index_view, name="home"),
 ]
 
