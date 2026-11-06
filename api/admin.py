@@ -1,10 +1,19 @@
-from django.contrib import admin
 from django import forms
+from django.contrib import admin
 from django.utils.html import format_html
+
 from .models import (
-    Salon, Service, Specialist, Client,
-    PromoCode, Appointment, WorkShift,
-    Payment, ConsentLog, Category, TimeSlot
+    Appointment,
+    Category,
+    Client,
+    ConsentLog,
+    Payment,
+    PromoCode,
+    Salon,
+    Service,
+    Specialist,
+    TimeSlot,
+    WorkShift,
 )
 
 

@@ -1,6 +1,7 @@
 from django import forms
-from .models import Appointment, Client, Service, Specialist, Salon
 from django.utils import timezone
+
+from .models import Appointment, Client, Salon, Service, Specialist
 
 
 class BookingForm(forms.Form):

@@ -1,16 +1,16 @@
 from django.urls import path
+
 from .views import (
-    service_view,
-    filter_entities,
-    login_view,
-    profile_view,
-    logout_view,
-    index_view,
-    service_finally_view,
     book_appointment,
-    show_appointment,
+    filter_entities,
     get_slots_by_specialist,
-    settings_view
+    login_view,
+    logout_view,
+    profile_view,
+    service_finally_view,
+    service_view,
+    settings_view,
+    show_appointment,
 )
 
 urlpatterns = [

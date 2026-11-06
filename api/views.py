@@ -1,26 +1,19 @@
 import re
+from datetime import datetime, time, timedelta
 from urllib.parse import urlencode
 
-import requests
 from django.conf import settings
-from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse, HttpResponseBadRequest
-from django.views.decorators.http import require_GET
-from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Count
-from django.utils import timezone
-from datetime import datetime, timedelta, time
-from django.utils.timezone import now
-from django.utils.dateparse import parse_date
 from django.db import transaction
+from django.db.models import Count
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from collections import defaultdict
+from django.utils import timezone
+from django.utils.dateparse import parse_date
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
 
-
-from .models import (
-    Client, Salon, Service, Specialist,
-    Category, TimeSlot, Appointment
-)
+from .models import Appointment, Category, Client, Salon, Service, Specialist, TimeSlot
 
 
 def index_view(request):
@@ -52,7 +45,7 @@ def index_view(request):
         'services':         services,
         'specialists':      specialists,
         'static_map_url':   static_map_url,
-        'points':           points, 
+        'points':           points,
         'YANDEX_GEOCODE_KEY': settings.YANDEX_GEOCODE_KEY,
     })
 
