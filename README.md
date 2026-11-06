@@ -5,19 +5,19 @@
 ## Структура проекта
 
 ```
-
 BeautyCity/
-├── api/                  # Django-приложение с моделями и логикой API
+├── api/                  # Приложение: модели, формы, представления, сервисы и тесты
+│   ├── views/            # Представления: вход, каталог, запись, личный кабинет
+│   ├── services/         # Логика без HTTP: слоты и бронирование, фильтры, коды входа, SMS
+│   └── tests/            # Тесты pytest
 ├── beautycity/           # Конфигурация проекта: настройки, urls, wsgi
-├── manage.py             # Управляющий скрипт Django
-├── static/               # Общая директория со статикой (css, js, img)
-├── staticfiles/          # Сборка статики после collectstatic
+├── static/               # Статика (css, js, img)
 ├── templates/            # HTML-шаблоны сайта
-├── db.sqlite3            # База данных (dev)
-├── requirements.txt      # Список зависимостей проекта
-├── .env                  # Переменные окружения (не отслеживается Git)
-└── .gitignore            # Игнорируемые файлы Git
-
+├── manage.py             # Управляющий скрипт Django
+├── requirements.txt      # Зависимости приложения
+├── requirements-dev.txt  # Зависимости для разработки: pytest, ruff
+├── pyproject.toml        # Настройки ruff, pytest и coverage
+└── .env                  # Переменные окружения (не отслеживается Git)
 ```
 
 ## Запуск проекта
@@ -25,15 +25,15 @@ BeautyCity/
 1. **Клонируй репозиторий:**
 
 ```bash
-git clone https://github.com/yourusername/BeautyCity.git
+git clone https://github.com/RamanSashyn/BeautyCity.git
 cd BeautyCity
-````
+```
 
 2. **Создай и активируй виртуальное окружение:**
 
 ```bash
 python3 -m venv venv
-source venv/bin/activate  # для Linux/MacOS
+source venv/bin/activate  # для Linux/macOS
 venv\Scripts\activate     # для Windows
 ```
 
@@ -43,82 +43,90 @@ venv\Scripts\activate     # для Windows
 pip install -r requirements.txt
 ```
 
-3. **Настройка переменных окружения**
-
-Создайте файл `.env` в корне проекта:
+4. **Настрой переменные окружения.** Создай файл `.env` в корне проекта (шаблон лежит в `.env.example`):
 
 ```
 SECRET_KEY="...."
 DEBUG=True
-ALLOWED_HOSTS=example.com,localhost,127.0.0.1
-
-# Настройки базы данных
-DATABASE_URL="postgres://user:pass@host:5432/dbname"
-DATABASE_URL="sqlite:///$(pwd)/db.sqlite3"
-
-TIME_ZONE='Asia/Krasnoyarsk'
-LANGUAGE_CODE='ru-ru'
-
-STATIC_URL='/static/'
-STATIC_ROOT='staticfiles'
-STATICFILES_DIRS='static'
-
-MEDIA_URL='/media/'
-MEDIA_ROOT='media'
-
+ALLOWED_HOSTS=localhost,127.0.0.1
+DATABASE_URL=sqlite:///db.sqlite3
 YANDEX_GEOCODE_KEY=ваш_yandex_geocode_ключ
 YANDEX_STATICMAP_KEY=ваш_yandex_staticmap_ключ
 ```
 
-Получите ключи Яндекс.Карт по ссылке: [https://developer.tech.yandex.ru/services/](https://developer.tech.yandex.ru/services/)
+| Переменная | Назначение |
+| --- | --- |
+| `SECRET_KEY` | секретный ключ Django (обязательна) |
+| `DATABASE_URL` | адрес базы: `sqlite:///db.sqlite3` или `postgres://user:pass@host:5432/dbname` (обязательна) |
+| `YANDEX_GEOCODE_KEY`, `YANDEX_STATICMAP_KEY` | ключи Яндекс.Карт, [получить](https://developer.tech.yandex.ru/services/) (обязательны) |
+| `DEBUG` | `True` для разработки, по умолчанию `False` |
+| `ALLOWED_HOSTS` | хосты через запятую, нужны при `DEBUG=False` |
+| `TIME_ZONE`, `LANGUAGE_CODE` | по умолчанию `Asia/Krasnoyarsk` и `ru-ru` |
+| `MEDIA_URL`, `MEDIA_ROOT` | адрес и каталог загружаемых файлов, по умолчанию `/media/` и `media` |
+| `SMS_SENDER` | класс, отправляющий SMS с кодом входа, см. ниже |
 
-4. **Примени миграции:**
+5. **Примени миграции и создай администратора:**
 
 ```bash
 python manage.py migrate
+python manage.py createsuperuser
 ```
 
-5. **Запусти сервер разработки:**
+6. **Запусти сервер разработки:**
 
 ```bash
 python manage.py runserver
 ```
 
-6. **Открой сайт в браузере:**
+7. **Открой сайт в браузере:** [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
 
-[http://127.0.0.1:8000/](http://127.0.0.1:8000/)
+## Данные
 
-## Подготовка данных из шаблонов
+Салоны, услуги, мастеров и расписание заводят в админке: [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/).
+Слоты времени для записи создаются автоматически при сохранении расписания мастера.
 
-Проект умеет **извлекать данные из HTML и JS** и сохранять их в `data/` в формате JSON. Эти данные затем импортируются в базу.
+## Вход по номеру телефона
 
-### 1. Извлечение данных:
+Вход идёт в два шага: клиент вводит номер, ему приходит одноразовый код, и только после
+верного кода он попадает в личный кабинет.
 
-```bash
-# Извлечь услуги и салоны из index.html
-python extract_data.py
+- код состоит из 6 цифр и действует 5 минут, в базе хранится только его хеш;
+- на один код даётся 5 попыток ввода;
+- код можно запрашивать не чаще раза в минуту, не более 5 раз в час на номер и 20 раз в час с одного IP.
 
-# Извлечь мастеров из JS (main.js)
-python extract_masters.py
+Отправкой SMS занимается класс из настройки `SMS_SENDER`. По умолчанию это
+`api.services.sms.ConsoleSmsSender`: код выводится в лог, SMS не уходит. Этого достаточно для
+разработки, но в продакшене код в логах оказываться не должен, поэтому нужно подключить
+реального провайдера. Для этого напиши наследника `SmsSender`, возьми ключи из переменных
+окружения и укажи путь к классу:
 
-# Извлечь услуги по категориям из service.html
-python extract_services_by_category.py
+```python
+from api.services.sms import SmsSender
+
+
+class MyProviderSender(SmsSender):
+    def send(self, phone: str, message: str) -> None:
+        ...  # вызов API провайдера
 ```
 
-Все JSON сохраняются в папку `data/`.
-
----
-
-### 2. Загрузка данных в базу
-
-После выполнения миграций, импортируй данные:
-
-```bash
-python load_initial_data.py
+```
+SMS_SENDER=mypackage.sms.MyProviderSender
 ```
 
-Это создаст:
+Ограничение по IP смотрит на адрес, с которого пришёл запрос. За обратным прокси это будет
+адрес самого прокси, поэтому его нужно настроить так, чтобы Django видел настоящий адрес клиента.
 
-* Салоны (из `salons.json`)
-* Услуги (из `services.json`)
-* Мастеров с фото (из `masters.json`)
+## Тесты и проверки
+
+```bash
+pip install -r requirements-dev.txt
+pytest --cov=api          # тесты и покрытие
+ruff check .              # линтер
+ruff format --check .     # проверка форматирования
+python manage.py check
+python manage.py makemigrations --check --dry-run
+```
+
+Тесты не требуют `.env`: по умолчанию они работают на SQLite в памяти. Чтобы прогнать их на
+PostgreSQL, как в CI, задай `DATABASE_URL`. Эти же проверки запускаются в GitHub Actions на
+каждый push в `master` и каждый pull request.
