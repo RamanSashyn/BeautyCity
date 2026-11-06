@@ -1,12 +1,13 @@
-"""Расчёт свободных слотов и пересечений с записями."""
+"""Расчёт свободных слотов, пересечений с записями и атомарное бронирование."""
 
 from datetime import date, datetime, time, timedelta
 
+from django.db import transaction
 from django.db.models import QuerySet
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 
-from api.models import Appointment, Service, TimeSlot
+from api.models import Appointment, Client, Salon, Service, Specialist, TimeSlot
 
 Interval = tuple[datetime, datetime]
 
@@ -79,3 +80,68 @@ def exclude_overlapping(
         if not overlaps(start, end, busy_by_specialist[slot.specialist_id]):
             suitable.append(slot)
     return suitable
+
+
+class BookingError(Exception):
+    """Запись невозможна. Текст можно показывать пользователю."""
+
+    def __init__(self, message: str):
+        super().__init__(message)
+        self.message = message
+
+
+class SlotUnavailable(BookingError):
+    """Слот не найден или уже занят."""
+
+
+class ServiceNotProvided(BookingError):
+    """Мастер не оказывает выбранную услугу."""
+
+
+def specialist_provides_service(specialist: Specialist, service: Service) -> bool:
+    return specialist.services.filter(id=service.id).exists()
+
+
+@transaction.atomic
+def book_slot(
+    *,
+    slot_id: int | str,
+    specialist: Specialist,
+    service: Service,
+    salon: Salon,
+    client: Client | None = None,
+    guest_name: str = "",
+    guest_phone: str = "",
+    source: str = "site",
+) -> Appointment:
+    """Атомарно занимает слот и создаёт запись.
+
+    Слот блокируется до конца транзакции (select_for_update), поэтому из двух одновременных
+    попыток записаться на один слот вторая получит SlotUnavailable. Запись принадлежит
+    клиенту либо, для гостя, хранит его имя и телефон в самой записи.
+    """
+    try:
+        slot = TimeSlot.objects.select_for_update().get(id=slot_id, is_booked=False)
+    except TimeSlot.DoesNotExist as error:
+        raise SlotUnavailable("Это время уже занято.") from error
+
+    if not specialist_provides_service(specialist, service):
+        raise ServiceNotProvided("Указанный специалист не оказывает выбранную услугу.")
+
+    start, end = slot_interval(slot.date, slot.time, service.duration_minutes)
+    appointment = Appointment.objects.create(
+        client=client,
+        guest_name=guest_name,
+        guest_phone=guest_phone,
+        specialist=specialist,
+        service=service,
+        salon=salon,
+        date_time_start=start,
+        date_time_end=end,
+        status="booked",
+        source=source,
+    )
+
+    slot.is_booked = True
+    slot.save(update_fields=["is_booked"])
+    return appointment

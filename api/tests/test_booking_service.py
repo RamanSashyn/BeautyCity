@@ -1,11 +1,13 @@
 """Сервис записи: разбор даты, пересечения и подбор свободных слотов."""
 
+import threading
 from datetime import date, datetime, time, timedelta
 
 import pytest
+from django.db import connection, connections
 from django.utils import timezone
 
-from api.models import Appointment, Salon, Specialist, TimeSlot
+from api.models import Appointment, Salon, Service, Specialist, TimeSlot
 from api.services import booking
 
 pytestmark = pytest.mark.django_db
@@ -139,3 +141,105 @@ class TestExcludeOverlapping:
 
         assert booking.exclude_overlapping([late], DAY, service) == [late]
         assert booking.exclude_overlapping([late], DAY, service, within_day=True) == []
+
+
+class TestBookSlot:
+    def book(self, slot, specialist, service, salon, **kwargs):
+        return booking.book_slot(
+            slot_id=slot.id, specialist=specialist, service=service, salon=salon, **kwargs
+        )
+
+    def test_запись_клиента_занимает_слот(self, owner, salon, service, specialist):
+        slot = add_slot(specialist, salon, 10)
+
+        appointment = self.book(slot, specialist, service, salon, client=owner)
+
+        slot.refresh_from_db()
+        assert slot.is_booked
+        assert appointment.client == owner
+        assert appointment.status == "booked"
+        assert appointment.source == "site"
+        assert appointment.date_time_start == aware(10)
+        assert appointment.date_time_end == aware(11)
+
+    def test_гостевая_запись_хранит_контакты_в_записи(self, salon, service, specialist):
+        slot = add_slot(specialist, salon, 10)
+
+        appointment = self.book(
+            slot, specialist, service, salon, guest_name="Мария", guest_phone="+79990001122"
+        )
+
+        assert appointment.client is None
+        assert (appointment.guest_name, appointment.guest_phone) == ("Мария", "+79990001122")
+
+    def test_на_один_слот_нельзя_записаться_дважды(
+        self, owner, stranger, salon, service, specialist
+    ):
+        slot = add_slot(specialist, salon, 10)
+        self.book(slot, specialist, service, salon, client=owner)
+
+        with pytest.raises(booking.SlotUnavailable):
+            self.book(slot, specialist, service, salon, client=stranger)
+
+        assert Appointment.objects.count() == 1
+        assert Appointment.objects.get().client == owner
+
+    def test_длинная_услуга_занимает_все_покрытые_слоты(
+        self, owner, stranger, salon, service, specialist
+    ):
+        first = add_slot(specialist, salon, 10)
+        second = add_slot(specialist, salon, 10, 30)
+        service.duration_minutes = 60
+        service.save()
+        self.book(first, specialist, service, salon, client=owner)
+
+        second.refresh_from_db()
+        assert second.is_booked
+        with pytest.raises(booking.SlotUnavailable):
+            self.book(second, specialist, service, salon, client=stranger)
+
+    def test_несуществующий_слот_недоступен(self, owner, salon, service, specialist):
+        with pytest.raises(booking.SlotUnavailable):
+            booking.book_slot(
+                slot_id=999999, specialist=specialist, service=service, salon=salon, client=owner
+            )
+
+    def test_мастер_без_этой_услуги_не_принимает_запись(self, owner, salon, specialist):
+        foreign = Service.objects.create(name="Окрашивание", base_price=3000, duration_minutes=120)
+        slot = add_slot(specialist, salon, 10)
+
+        with pytest.raises(booking.ServiceNotProvided):
+            self.book(slot, specialist, foreign, salon, client=owner)
+
+        slot.refresh_from_db()
+        assert not slot.is_booked
+        assert not Appointment.objects.exists()
+
+    @pytest.mark.django_db(transaction=True)
+    def test_параллельные_попытки_записать_один_слот_дают_одну_запись(
+        self, owner, stranger, salon, service, specialist
+    ):
+        if connection.vendor != "postgresql":
+            pytest.skip("блокировка строк проверяется только на PostgreSQL")
+        slot = add_slot(specialist, salon, 10)
+        barrier = threading.Barrier(2)
+        results = []
+
+        def attempt(client):
+            try:
+                barrier.wait()
+                self.book(slot, specialist, service, salon, client=client)
+                results.append("ok")
+            except booking.SlotUnavailable:
+                results.append("занято")
+            finally:
+                connections.close_all()
+
+        threads = [threading.Thread(target=attempt, args=(c,)) for c in (owner, stranger)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+        assert sorted(results) == ["ok", "занято"]
+        assert Appointment.objects.count() == 1

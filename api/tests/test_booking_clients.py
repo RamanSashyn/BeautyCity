@@ -1,6 +1,6 @@
 import pytest
 
-from api.models import Appointment, Client, TimeSlot
+from api.models import Appointment, Client, Service, TimeSlot
 from api.tests.helpers import confirm_booking, start_booking
 
 pytestmark = pytest.mark.django_db
@@ -117,4 +117,31 @@ def test_прямой_post_на_страницу_услуг_не_создаёт_
     )
 
     assert response.status_code == 405
+    assert not Appointment.objects.exists()
+
+
+def test_мастер_без_выбранной_услуги_не_принимает_запись(client, slot, salon, specialist):
+    foreign = Service.objects.create(name="Окрашивание", base_price=3000, duration_minutes=120)
+    start_booking(client, slot, salon, foreign, specialist)
+
+    page = client.get("/api/service-finally/")
+    response = confirm_booking(client)
+
+    assert "не оказывает выбранную услугу" in page.content.decode()
+    assert response.status_code == 200
+    assert "не оказывает выбранную услугу" in response.content.decode()
+    assert not Appointment.objects.exists()
+    assert not TimeSlot.objects.get(pk=slot.pk).is_booked
+
+
+def test_занятый_за_время_заполнения_формы_слот_возвращает_к_выбору(
+    client, slot, salon, service, specialist
+):
+    start_booking(client, slot, salon, service, specialist)
+    TimeSlot.objects.filter(pk=slot.pk).update(is_booked=True)
+
+    response = confirm_booking(client)
+
+    assert response.status_code == 302
+    assert response.url == "/api/service/"
     assert not Appointment.objects.exists()

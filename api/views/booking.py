@@ -1,12 +1,10 @@
-from datetime import datetime, timedelta
-
-from django.db import transaction
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from api.forms import BookingContactForm
 from api.models import Appointment, Salon, Service, Specialist, TimeSlot
+from api.services import booking
 from api.views.helpers import current_client, first_error
 
 
@@ -23,15 +21,13 @@ def book_appointment(request):
     return JsonResponse({"success": False, "error": "Invalid method"})
 
 
-@transaction.atomic
 def service_finally_view(request):
     data = request.session.get("booking_data")
     if not data:
         return redirect("service_view")
 
-    try:
-        slot = TimeSlot.objects.select_for_update().get(id=data["slot_id"], is_booked=False)
-    except TimeSlot.DoesNotExist:
+    slot = TimeSlot.objects.filter(id=data["slot_id"], is_booked=False).first()
+    if slot is None:
         return redirect("service_view")
 
     salon = get_object_or_404(Salon, id=data["salon_id"])
@@ -46,55 +42,48 @@ def service_finally_view(request):
     def page(**extra):
         return render(request, "serviceFinally.html", {**context, **extra})
 
-    if not specialist.services.filter(id=service.id).exists():
+    if not booking.specialist_provides_service(specialist, service):
         return page(error="Указанный специалист не оказывает выбранную услугу.")
 
-    if request.method == "POST":
-        data = request.POST.copy()
-        if client:
-            # Вошедший клиент записывается на себя: номер из формы не используется.
-            data["tel"] = client.phone
-        form = BookingContactForm(data)
-        if not form.is_valid():
-            return page(
-                error=first_error(form),
-                name=data.get("fname", ""),
-                phone=data.get("tel", ""),
-                question=data.get("contactsTextarea", ""),
-            )
+    if request.method != "POST":
+        return page()
 
-        name = form.cleaned_data["fname"]
-        if client:
-            if client.name != name:
-                client.name = name
-                client.save(update_fields=["name"])
-            owner = {"client": client}
-        else:
-            # Гость не трогает существующих клиентов: контакты лежат в самой записи.
-            owner = {"guest_name": name, "guest_phone": form.cleaned_data["tel"]}
-
-        start = datetime.combine(slot.date, slot.time)
-        end = start + timedelta(minutes=service.duration_minutes)
-
-        appointment = Appointment.objects.create(
-            **owner,
-            specialist=specialist,
-            service=service,
-            salon=salon,
-            date_time_start=start,
-            date_time_end=end,
-            status="booked",
-            source="site",
+    form_data = request.POST.copy()
+    if client:
+        # Вошедший клиент записывается на себя: номер из формы не используется.
+        form_data["tel"] = client.phone
+    form = BookingContactForm(form_data)
+    if not form.is_valid():
+        return page(
+            error=first_error(form),
+            name=form_data.get("fname", ""),
+            phone=form_data.get("tel", ""),
+            question=form_data.get("contactsTextarea", ""),
         )
 
-        slot.is_booked = True
-        slot.save()
+    name = form.cleaned_data["fname"]
+    # Гость не трогает существующих клиентов: его контакты лежат в самой записи.
+    owner = (
+        {"client": client}
+        if client
+        else {"guest_name": name, "guest_phone": form.cleaned_data["tel"]}
+    )
+    try:
+        appointment = booking.book_slot(
+            slot_id=slot.id, specialist=specialist, service=service, salon=salon, **owner
+        )
+    except booking.SlotUnavailable:
+        return redirect("service_view")
+    except booking.BookingError as error:
+        return page(error=error.message)
 
-        del request.session["booking_data"]
-        request.session["last_appointment_id"] = appointment.id
-        return redirect("show_appointment", appointment_id=appointment.id)
+    if client and client.name != name:
+        client.name = name
+        client.save(update_fields=["name"])
 
-    return page()
+    del request.session["booking_data"]
+    request.session["last_appointment_id"] = appointment.id
+    return redirect("show_appointment", appointment_id=appointment.id)
 
 
 def _can_view_appointment(request, appointment):
