@@ -1,7 +1,31 @@
 from django import forms
+from django.core.validators import RegexValidator
 from django.utils import timezone
 
 from .models import Appointment, Client, Salon, Service, Specialist
+
+PHONE_ERROR = "Введите корректный номер телефона в формате +7XXXXXXXXXX"
+
+phone_validator = RegexValidator(r"^\+7\d{10}\Z", PHONE_ERROR)
+
+
+class PhoneForm(forms.Form):
+    """Номер телефона в формате +7XXXXXXXXXX."""
+
+    tel = forms.CharField(
+        validators=[phone_validator],
+        error_messages={"required": "Введите номер телефона"},
+    )
+
+
+class LoginCodeForm(PhoneForm):
+    """Номер и одноразовый код, пришедший по SMS."""
+
+    code = forms.CharField(
+        max_length=10,
+        validators=[RegexValidator(r"^\d+\Z", "Неверный код.")],
+        error_messages={"required": "Введите код из SMS"},
+    )
 
 
 class BookingForm(forms.Form):

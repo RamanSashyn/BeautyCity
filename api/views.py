@@ -13,7 +13,9 @@ from django.utils.dateparse import parse_date
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
+from .forms import LoginCodeForm, PhoneForm
 from .models import Appointment, Category, Client, Salon, Service, Specialist, TimeSlot
+from .services import login_codes
 
 
 def index_view(request):
@@ -279,20 +281,52 @@ def filter_entities(request):
     )
 
 
+def _first_error(form):
+    return next(iter(form.errors.values()))[0]
+
+
+def _code_error_response(error):
+    payload = {"ok": False, "error": error.message}
+    if error.retry_after:
+        payload["retry_after"] = error.retry_after
+    return JsonResponse(payload, status=error.status)
+
+
 @csrf_exempt
 def login_view(request):
-    if request.method == "POST":
-        phone = request.POST.get("tel")
-        if not is_valid_phone(phone):
-            return render(
-                request,
-                "index.html",
-                {"phone_error": "Введите корректный номер телефона в формате +7XXXXXXXXXX"},
-            )
-        client, _ = Client.objects.get_or_create(phone=phone)
-        request.session["client_id"] = client.id
+    """Шаг 1 входа: принимает номер и отправляет на него одноразовый код."""
+    if request.method != "POST":
         return redirect("/")
-    return redirect("/")
+
+    form = PhoneForm(request.POST)
+    if not form.is_valid():
+        return JsonResponse({"ok": False, "error": _first_error(form)}, status=400)
+
+    try:
+        login_codes.issue_code(form.cleaned_data["tel"], request.META.get("REMOTE_ADDR"))
+    except login_codes.LoginCodeError as error:
+        return _code_error_response(error)
+
+    return JsonResponse({"ok": True, "resend_after": settings.LOGIN_CODE_RESEND_SECONDS})
+
+
+def login_verify_view(request):
+    """Шаг 2 входа: проверяет код, и только после этого клиент попадает в сессию."""
+    if request.method != "POST":
+        return redirect("/")
+
+    form = LoginCodeForm(request.POST)
+    if not form.is_valid():
+        return JsonResponse({"ok": False, "error": _first_error(form)}, status=400)
+
+    try:
+        client = login_codes.verify_code(form.cleaned_data["tel"], form.cleaned_data["code"])
+    except login_codes.LoginCodeError as error:
+        return _code_error_response(error)
+
+    request.session.cycle_key()
+    request.session["client_id"] = client.id
+    return JsonResponse({"ok": True})
 
 
 def profile_view(request):

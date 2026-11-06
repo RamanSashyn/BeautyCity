@@ -156,7 +156,51 @@ $(document).ready(function () {
 		{ sel: '.tipsPopupOpen', modal: '#tipsModal' }
 	].forEach(({ sel, modal }) => $(sel).click(e => { e.preventDefault(); $(modal).arcticmodal(); }));
 
-	$('.authPopup__form').submit(() => { $('#confirmModal').arcticmodal(); return true; });
+	function showAuthError($form, text) {
+		$form.find('.authPopup__error').text(text).toggle(Boolean(text));
+	}
+
+	function authErrorText(xhr) {
+		return (xhr.responseJSON && xhr.responseJSON.error) || 'Не удалось выполнить запрос. Попробуйте ещё раз.';
+	}
+
+	// Вход в два шага: сначала номер и отправка кода, затем ввод кода.
+	$(document).on('submit', '.authPopup__form[data-auth-step="phone"]', function (e) {
+		e.preventDefault();
+		const $phoneForm = $(this);
+		const $popup = $phoneForm.closest('.authPopup');
+		const $codeForm = $popup.find('[data-auth-step="code"]');
+		const phone = $phoneForm.find('[name=tel]').val().trim();
+		showAuthError($phoneForm, '');
+		$.post($phoneForm.attr('action'), $phoneForm.serialize())
+			.done(() => {
+				$codeForm.find('[name=tel]').val(phone);
+				$codeForm.find('[name=code]').val('');
+				showAuthError($codeForm, '');
+				$popup.find('[data-auth-hint]').text(`Мы отправили код на ${phone}`);
+				$phoneForm.hide();
+				$codeForm.show();
+				$codeForm.find('[name=code]').trigger('focus');
+			})
+			.fail(xhr => showAuthError($phoneForm, authErrorText(xhr)));
+	});
+
+	$(document).on('submit', '.authPopup__form[data-auth-step="code"]', function (e) {
+		e.preventDefault();
+		const $codeForm = $(this);
+		showAuthError($codeForm, '');
+		$.post($codeForm.attr('action'), $codeForm.serialize())
+			.done(() => window.location.reload())
+			.fail(xhr => showAuthError($codeForm, authErrorText(xhr)));
+	});
+
+	$(document).on('click', '[data-auth-back]', function (e) {
+		e.preventDefault();
+		const $popup = $(this).closest('.authPopup');
+		$popup.find('[data-auth-hint]').text('Введите свой номер телефона для входа');
+		$popup.find('[data-auth-step="code"]').hide();
+		$popup.find('[data-auth-step="phone"]').show();
+	});
 
 	$(document).on('click', '.servicePage', function () {
 		if ($('.time__elems_btn.active').length && $('.service__form_block > button.selected').length) {
