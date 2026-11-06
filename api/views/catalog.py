@@ -2,18 +2,14 @@ from datetime import datetime, time, timedelta
 from urllib.parse import urlencode
 
 from django.conf import settings
-from django.db import transaction
 from django.db.models import Count
-from django.http import Http404, JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.views.decorators.http import require_GET
 
-from .forms import BookingContactForm, LoginCodeForm, PhoneForm
-from .models import Appointment, Category, Client, Salon, Service, Specialist, TimeSlot
-from .services import login_codes
+from api.models import Appointment, Category, Salon, Service, Specialist, TimeSlot
 
 
 def index_view(request):
@@ -221,191 +217,6 @@ def filter_entities(request):
     )
 
 
-def _first_error(form):
-    return next(iter(form.errors.values()))[0]
-
-
-def _code_error_response(error):
-    payload = {"ok": False, "error": error.message}
-    if error.retry_after:
-        payload["retry_after"] = error.retry_after
-    return JsonResponse(payload, status=error.status)
-
-
-def login_view(request):
-    """Шаг 1 входа: принимает номер и отправляет на него одноразовый код."""
-    if request.method != "POST":
-        return redirect("/")
-
-    form = PhoneForm(request.POST)
-    if not form.is_valid():
-        return JsonResponse({"ok": False, "error": _first_error(form)}, status=400)
-
-    try:
-        login_codes.issue_code(form.cleaned_data["tel"], request.META.get("REMOTE_ADDR"))
-    except login_codes.LoginCodeError as error:
-        return _code_error_response(error)
-
-    return JsonResponse({"ok": True, "resend_after": settings.LOGIN_CODE_RESEND_SECONDS})
-
-
-def login_verify_view(request):
-    """Шаг 2 входа: проверяет код, и только после этого клиент попадает в сессию."""
-    if request.method != "POST":
-        return redirect("/")
-
-    form = LoginCodeForm(request.POST)
-    if not form.is_valid():
-        return JsonResponse({"ok": False, "error": _first_error(form)}, status=400)
-
-    try:
-        client = login_codes.verify_code(form.cleaned_data["tel"], form.cleaned_data["code"])
-    except login_codes.LoginCodeError as error:
-        return _code_error_response(error)
-
-    request.session.cycle_key()
-    request.session["client_id"] = client.id
-    return JsonResponse({"ok": True})
-
-
-def profile_view(request):
-    client_id = request.session.get("client_id")
-    if not client_id:
-        return redirect("/")
-
-    client = get_object_or_404(Client, id=client_id)
-
-    appointments = (
-        Appointment.objects.filter(client=client)
-        .select_related("specialist", "service", "salon")
-        .order_by("-date_time_start")
-    )
-
-    return render(
-        request,
-        "profile.html",
-        {
-            "client": client,
-            "appointments": appointments,
-        },
-    )
-
-
-def logout_view(request):
-    request.session.flush()
-    return redirect("/")
-
-
-def book_appointment(request):
-    if request.method == "POST":
-        request.session["booking_data"] = {
-            "slot_id": request.POST.get("slot_id"),
-            "salon_id": request.POST.get("salon_id"),
-            "service_id": request.POST.get("service_id"),
-            "specialist_id": request.POST.get("specialist_id"),
-        }
-        redirect_url = reverse("service_finally")
-        return JsonResponse({"success": True, "redirect_url": redirect_url})
-    return JsonResponse({"success": False, "error": "Invalid method"})
-
-
-@transaction.atomic
-def service_finally_view(request):
-    data = request.session.get("booking_data")
-    if not data:
-        return redirect("service_view")
-
-    try:
-        slot = TimeSlot.objects.select_for_update().get(id=data["slot_id"], is_booked=False)
-    except TimeSlot.DoesNotExist:
-        return redirect("service_view")
-
-    salon = get_object_or_404(Salon, id=data["salon_id"])
-    service = get_object_or_404(Service, id=data["service_id"])
-    specialist = get_object_or_404(Specialist, id=data["specialist_id"])
-
-    client = _current_client(request)
-    context = {"service": service, "salon": salon, "specialist": specialist, "slot": slot}
-    if client:
-        context.update(name=client.name, phone=client.phone, phone_readonly=True)
-
-    def page(**extra):
-        return render(request, "serviceFinally.html", {**context, **extra})
-
-    if not specialist.services.filter(id=service.id).exists():
-        return page(error="Указанный специалист не оказывает выбранную услугу.")
-
-    if request.method == "POST":
-        data = request.POST.copy()
-        if client:
-            # Вошедший клиент записывается на себя: номер из формы не используется.
-            data["tel"] = client.phone
-        form = BookingContactForm(data)
-        if not form.is_valid():
-            return page(
-                error=_first_error(form),
-                name=data.get("fname", ""),
-                phone=data.get("tel", ""),
-                question=data.get("contactsTextarea", ""),
-            )
-
-        name = form.cleaned_data["fname"]
-        if client:
-            if client.name != name:
-                client.name = name
-                client.save(update_fields=["name"])
-            owner = {"client": client}
-        else:
-            # Гость не трогает существующих клиентов: контакты лежат в самой записи.
-            owner = {"guest_name": name, "guest_phone": form.cleaned_data["tel"]}
-
-        start = datetime.combine(slot.date, slot.time)
-        end = start + timedelta(minutes=service.duration_minutes)
-
-        appointment = Appointment.objects.create(
-            **owner,
-            specialist=specialist,
-            service=service,
-            salon=salon,
-            date_time_start=start,
-            date_time_end=end,
-            status="booked",
-            source="site",
-        )
-
-        slot.is_booked = True
-        slot.save()
-
-        del request.session["booking_data"]
-        request.session["last_appointment_id"] = appointment.id
-        return redirect("show_appointment", appointment_id=appointment.id)
-
-    return page()
-
-
-def _current_client(request):
-    client_id = request.session.get("client_id")
-    if client_id is None:
-        return None
-    return Client.objects.filter(id=client_id).first()
-
-
-def _can_view_appointment(request, appointment):
-    """Запись видит её владелец или тот, кто только что её создал в этой сессии."""
-    if appointment.id == request.session.get("last_appointment_id"):
-        return True
-    client_id = request.session.get("client_id")
-    return client_id is not None and appointment.client_id == client_id
-
-
-def show_appointment(request, appointment_id):
-    appointment = get_object_or_404(Appointment, id=appointment_id)
-    if not _can_view_appointment(request, appointment):
-        # Чужая и несуществующая запись неразличимы: ID последовательные.
-        raise Http404
-    return render(request, "serviceFinally.html", {"appointment": appointment})
-
-
 @require_GET
 def get_slots_by_specialist(request):
     specialist_id = request.GET.get("specialist_id")
@@ -482,19 +293,3 @@ def get_slots_by_specialist(request):
             )
 
     return JsonResponse(result, safe=False)
-
-
-def settings_view(request):
-    client_id = request.session.get("client_id")
-    if not client_id:
-        return redirect("/")
-    client = get_object_or_404(Client, id=client_id)
-
-    if request.method == "POST":
-        client.name = request.POST.get("name", "")
-        client.gender = request.POST.get("gender", "")
-        client.birthday = request.POST.get("birthday", "")
-        client.save()
-        return redirect("settings")
-
-    return render(request, "settings.html", {"client": client})
