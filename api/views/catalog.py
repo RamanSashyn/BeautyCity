@@ -10,6 +10,7 @@ from django.utils.dateparse import parse_date
 from django.views.decorators.http import require_GET
 
 from api.models import Appointment, Category, Salon, Service, Specialist, TimeSlot
+from api.services import booking
 
 
 def index_view(request):
@@ -217,79 +218,55 @@ def filter_entities(request):
     )
 
 
+def _slot_json(slot):
+    return {
+        "id": slot.id,
+        "date": slot.date.strftime("%Y-%m-%d"),
+        "time": slot.time.strftime("%H:%M"),
+        "hour": slot.time.hour,
+    }
+
+
+def _group_slots_by_time(slots):
+    groups = {}
+    for slot in slots:
+        groups.setdefault(slot.time, []).append(slot)
+    return [
+        {
+            "time": slot_time.strftime("%H:%M"),
+            "hour": slot_time.hour,
+            "slots": [
+                {
+                    "id": slot.id,
+                    "specialist_id": slot.specialist.id,
+                    "specialist_name": str(slot.specialist),
+                }
+                for slot in group
+            ],
+        }
+        for slot_time, group in groups.items()
+    ]
+
+
 @require_GET
 def get_slots_by_specialist(request):
+    """Свободные слоты на день.
+
+    Если выбраны мастер и услуга, отдаёт плоский список слотов без пересечений с записями.
+    Иначе слоты группируются по времени, внутри группы идут мастера.
+    """
     specialist_id = request.GET.get("specialist_id")
-    salon_id = request.GET.get("salon_id")
     service_id = request.GET.get("service_id")
-    date_str = request.GET.get("date")
+    day = booking.parse_date_param(request.GET.get("date"))
 
-    date_filter = parse_date(date_str) if date_str else None
-    if not date_filter and date_str:
-        try:
-            date_filter = datetime.strptime(date_str, "%d.%m.%Y").date()
-        except ValueError:
-            date_filter = timezone.localdate()
-    if not date_filter:
-        date_filter = timezone.localdate()
-
-    qs = TimeSlot.objects.filter(date=date_filter, is_booked=False)
-    if specialist_id:
-        qs = qs.filter(specialist_id=specialist_id)
-    if salon_id:
-        qs = qs.filter(salon_id=salon_id)
-
-    tz = timezone.get_current_timezone()
+    slots = booking.free_slots(
+        day, specialist_id=specialist_id, salon_id=request.GET.get("salon_id")
+    )
 
     if service_id and specialist_id:
         service = get_object_or_404(Service, id=service_id)
-        duration = timedelta(minutes=service.duration_minutes)
+        suitable = booking.exclude_overlapping(slots.order_by("time"), day, service)
+        return JsonResponse([_slot_json(slot) for slot in suitable], safe=False)
 
-        appts = Appointment.objects.filter(
-            specialist_id=specialist_id, date_time_start__date=date_filter
-        ).values_list("date_time_start", "date_time_end")
-
-        def overlaps(slot):
-            start_naive = datetime.combine(date_filter, slot.time)
-            start = timezone.make_aware(start_naive, tz)
-            end = start + duration
-            for a_start, a_end in appts:
-                if a_start < end and a_end > start:
-                    return True
-            return False
-
-        slots = [s for s in qs.order_by("time") if not overlaps(s)]
-        result = [
-            {
-                "id": s.id,
-                "date": s.date.strftime("%Y-%m-%d"),
-                "time": s.time.strftime("%H:%M"),
-                "hour": s.time.hour,
-            }
-            for s in slots
-        ]
-
-    else:
-        all_slots = qs.order_by("time", "specialist_id")
-        time_groups = {}
-        for slot in all_slots:
-            time_groups.setdefault(slot.time, []).append(slot)
-
-        result = []
-        for t, group in time_groups.items():
-            result.append(
-                {
-                    "time": t.strftime("%H:%M"),
-                    "hour": t.hour,
-                    "slots": [
-                        {
-                            "id": s.id,
-                            "specialist_id": s.specialist.id,
-                            "specialist_name": str(s.specialist),
-                        }
-                        for s in group
-                    ],
-                }
-            )
-
-    return JsonResponse(result, safe=False)
+    ordered = slots.select_related("specialist").order_by("time", "specialist_id")
+    return JsonResponse(_group_slots_by_time(ordered), safe=False)
