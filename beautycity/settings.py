@@ -75,4 +75,23 @@ MEDIA_ROOT = BASE_DIR / env("MEDIA_ROOT", default="media")
 YANDEX_GEOCODE_KEY = env("YANDEX_GEOCODE_KEY")
 YANDEX_STATICMAP_KEY = env("YANDEX_STATICMAP_KEY")
 
+# Вход по одноразовому коду из SMS.
+LOGIN_CODE_LENGTH = 6
+LOGIN_CODE_TTL_SECONDS = 5 * 60
+LOGIN_CODE_MAX_ATTEMPTS = 5
+LOGIN_CODE_RESEND_SECONDS = 60
+LOGIN_CODE_PHONE_HOURLY_LIMIT = 5
+LOGIN_CODE_IP_HOURLY_LIMIT = 20
+
+# Класс, который отправляет SMS (наследник api.services.sms.SmsSender).
+# По умолчанию код пишется в лог, реального провайдера подключают этой настройкой.
+SMS_SENDER = env("SMS_SENDER", default="api.services.sms.ConsoleSmsSender")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "loggers": {"api": {"handlers": ["console"], "level": "INFO"}},
+}
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

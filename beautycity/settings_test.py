@@ -14,3 +14,5 @@ os.environ.setdefault("YANDEX_GEOCODE_KEY", "test")
 os.environ.setdefault("YANDEX_STATICMAP_KEY", "test")
 
 from .settings import *  # noqa: E402, F403
+
+SMS_SENDER = "api.services.sms.InMemorySmsSender"
