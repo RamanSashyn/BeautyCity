@@ -80,6 +80,27 @@ python manage.py runserver
 
 7. **Открой сайт в браузере:** [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
 
+## Запуск через Docker
+
+Нужны Docker и Docker Compose. Compose поднимает приложение (gunicorn) и PostgreSQL, миграции
+применяются при старте.
+
+```bash
+cp .env.example .env      # затем задай SECRET_KEY, POSTGRES_PASSWORD и ключи Яндекса
+docker compose up --build
+```
+
+Сайт откроется на [http://localhost:8000/](http://localhost:8000/). Администратора создают так:
+
+```bash
+docker compose exec web python manage.py createsuperuser
+```
+
+Адрес базы compose собирает из переменных `POSTGRES_DB`, `POSTGRES_USER` и `POSTGRES_PASSWORD`,
+поэтому `DATABASE_URL` в `.env` для Docker задавать не нужно. База и загруженные файлы лежат в
+томах `postgres_data` и `media`. Статику отдаёт WhiteNoise, а файлы из `media` в режиме
+`DEBUG=False` должен раздавать внешний прокси.
+
 ## Данные
 
 Салоны, услуги, мастеров и расписание заводят в админке: [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/).
