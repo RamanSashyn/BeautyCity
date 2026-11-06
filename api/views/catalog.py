@@ -1,4 +1,4 @@
-from datetime import datetime, time, timedelta
+from datetime import time
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -6,11 +6,10 @@ from django.db.models import Count
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
-from django.utils.dateparse import parse_date
 from django.views.decorators.http import require_GET
 
-from api.models import Appointment, Category, Salon, Service, Specialist, TimeSlot
-from api.services import booking
+from api.models import Category, Salon, Service, Specialist, TimeSlot
+from api.services import booking, filters
 
 
 def index_view(request):
@@ -82,140 +81,17 @@ def service_view(request):
 
 @require_GET
 def filter_entities(request):
-    slot_id = request.GET.get("slot_id")
-    date_str = request.GET.get("date")
-    salon_id = request.GET.get("salon")
-    service_id = request.GET.get("service")
-    specialist_id = request.GET.get("specialist")
-    time_str = request.GET.get("time")
-
-    now_dt = timezone.now()
-
-    date_filter = parse_date(date_str) if date_str else None
-    if not date_filter and date_str:
-        try:
-            date_filter = datetime.strptime(date_str, "%d.%m.%Y").date()
-        except ValueError:
-            date_filter = timezone.localdate()
-    if not date_filter:
-        date_filter = timezone.localdate()
-
-    if slot_id:
-        slot_qs = TimeSlot.objects.filter(id=slot_id, date=date_filter, is_booked=False)
-        if date_filter == now_dt.date():
-            slot_qs = slot_qs.filter(time__gt=now_dt.time())
-
-        slot = slot_qs.select_related("salon", "specialist").first()
-        if slot:
-            services_for_spec = slot.specialist.services.all()
-            return JsonResponse(
-                {
-                    "salons": [{"id": slot.salon_id, "name": str(slot.salon)}],
-                    "services": [{"id": s.id, "name": str(s)} for s in services_for_spec],
-                    "specialists": [{"id": slot.specialist_id, "name": str(slot.specialist)}],
-                }
-            )
-
-    if time_str:
-        try:
-            time_filter = datetime.strptime(time_str, "%H:%M").time()
-        except ValueError:
-            time_filter = None
-
-        if time_filter:
-            slots_time = TimeSlot.objects.filter(
-                date=date_filter, time=time_filter, is_booked=False
-            )
-            if date_filter == now_dt.date() and time_filter <= now_dt.time():
-                return JsonResponse({"salons": [], "services": [], "specialists": []})
-
-            if salon_id:
-                slots_time = slots_time.filter(salon_id=salon_id)
-            if service_id:
-                slots_time = slots_time.filter(specialist__services__id=service_id)
-
-                service = get_object_or_404(Service, id=service_id)
-                duration = timedelta(minutes=service.duration_minutes)
-                tz = timezone.get_current_timezone()
-
-                valid_ids = []
-                for slot in slots_time:
-                    start_naive = datetime.combine(date_filter, slot.time)
-                    start = timezone.make_aware(start_naive, tz)
-                    end = start + duration
-
-                    if end.date() != date_filter:
-                        continue
-
-                    appts = Appointment.objects.filter(
-                        specialist_id=slot.specialist_id, date_time_start__date=date_filter
-                    ).values_list("date_time_start", "date_time_end")
-
-                    overlap = False
-                    for a_start, a_end in appts:
-                        if a_start < end and a_end > start:
-                            overlap = True
-                            break
-
-                    if not overlap:
-                        valid_ids.append(slot.id)
-
-                slots_time = slots_time.filter(id__in=valid_ids)
-
-            salon_ids = slots_time.values_list("salon_id", flat=True).distinct()
-            specialist_ids = slots_time.values_list("specialist_id", flat=True).distinct()
-
-            services_qs = Service.objects.filter(specialist__id__in=specialist_ids).distinct()
-            salons_qs = Salon.objects.filter(id__in=salon_ids)
-            specialists_qs = Specialist.objects.filter(id__in=specialist_ids)
-
-            return JsonResponse(
-                {
-                    "salons": [{"id": s.id, "name": str(s)} for s in salons_qs],
-                    "services": [{"id": s.id, "name": str(s)} for s in services_qs],
-                    "specialists": [{"id": s.id, "name": str(s)} for s in specialists_qs],
-                }
-            )
-
-    salons_qs = Salon.objects.all()
-    services_qs = Service.objects.all()
-    specialists_qs = Specialist.objects.all()
-
-    if specialist_id:
-        spec = specialists_qs.filter(pk=specialist_id).first()
-        if spec:
-            salons_qs = spec.salons.all()
-            services_qs = spec.services.all()
-            specialists_qs = specialists_qs.filter(pk=spec.id)
-
-    if service_id:
-        svc = services_qs.filter(pk=service_id).first()
-        if svc:
-            sl_allowed = Salon.objects.filter(specialist__services=svc).distinct()
-            salons_qs = salons_qs.filter(id__in=sl_allowed.values_list("id", flat=True))
-            sp_allowed = specialists_qs.filter(services=svc).distinct()
-            specialists_qs = specialists_qs.filter(id__in=sp_allowed.values_list("id", flat=True))
-            services_qs = services_qs.filter(pk=svc.id)
-
-    if salon_id:
-        sl = salons_qs.filter(pk=salon_id).first()
-        if sl:
-            svc_in_salon = Service.objects.filter(specialist__salons=sl).distinct()
-            services_qs = services_qs.filter(id__in=svc_in_salon.values_list("id", flat=True))
-            sp_in_salon = specialists_qs.filter(salons=sl).distinct()
-            specialists_qs = specialists_qs.filter(id__in=sp_in_salon.values_list("id", flat=True))
-            salons_qs = salons_qs.filter(pk=sl.id)
-
-    def serialize(qs):
-        return [{"id": o.id, "name": str(o)} for o in qs]
-
-    return JsonResponse(
-        {
-            "salons": serialize(salons_qs),
-            "services": serialize(services_qs),
-            "specialists": serialize(specialists_qs),
-        }
+    """Взаимозависимые фильтры: что ещё можно выбрать при уже сделанном выборе."""
+    params = request.GET
+    entities = filters.find_entities(
+        day=booking.parse_date_param(params.get("date")),
+        slot_id=params.get("slot_id"),
+        time_str=params.get("time"),
+        salon_id=params.get("salon"),
+        service_id=params.get("service"),
+        specialist_id=params.get("specialist"),
     )
+    return JsonResponse(entities.as_json())
 
 
 def _slot_json(slot):
