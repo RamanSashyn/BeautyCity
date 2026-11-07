@@ -3,6 +3,7 @@
 from datetime import time, timedelta
 
 import pytest
+from django.conf import settings
 from django.utils import timezone
 
 from api.models import Category, Salon, TimeSlot
@@ -47,7 +48,7 @@ def test_главная_строит_карту_по_координатам_са
 
     assert context["points"] == [{"lat": 56.01, "lon": 92.85, "hint": "Центр"}]
     assert "pt=92.85%2C56.01%2Cpm2rdm" in context["static_map_url"]
-    assert "apikey=test" in context["static_map_url"]
+    assert f"apikey={settings.YANDEX_STATICMAP_KEY}" in context["static_map_url"]
 
 
 def test_салон_без_ответа_геокодера_сохраняется_без_координат(salon):
