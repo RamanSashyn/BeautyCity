@@ -100,7 +100,8 @@
                                        value="{{ name }}" placeholder="Введите имя" required="">
 								<div class="contacts__form_inputBlock">
 									<input type="text" name="tel" class="contacts__form_iunput"
-										value="{{ phone }}" placeholder="+7(999)999--99-99" required="">
+										value="{{ phone }}" placeholder="+7(999)999--99-99" required=""
+											{% if phone_readonly %}readonly{% endif %}>
 								</div>
 							</div>
 							<textarea name="contactsTextarea" class="contacts__form_textarea"

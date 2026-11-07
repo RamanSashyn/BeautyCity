@@ -23,7 +23,8 @@
 </head>
 
 <body class="{% block body_class %}{% endblock %}"
-    data-is-logged-in="{% if request.session.client_id %}true{% else %}false{% endif %}">
+    data-is-logged-in="{% if request.session.client_id %}true{% else %}false{% endif %}"
+    data-csrf-token="{{ csrf_token }}">
     {% include "partials/mob_menu.html" %}
     {% include "partials/header.html" %}
     <main>

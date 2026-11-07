@@ -3,19 +3,32 @@
 
     <div id="authModal" class="authPopup popup">
         <div class="popup__title authPopup__title">Войти по номеру телефона</div>
-        <p class="popup__text authPopup__text">Введите свой номер телефона для входа</p>
-        <form action="/api/login/" method="POST" class="authPopup__form">
+        <p class="popup__text authPopup__text" data-auth-hint>Введите свой номер телефона для входа</p>
+
+        <form action="/api/login/" method="POST" class="authPopup__form" data-auth-step="phone">
+            {% csrf_token %}
             <div class="contacts__form_inputBlock">
-                <input type="text" name="tel" class="contacts__form_iunput" placeholder="+7(999)999--99-99" required>
-                {% if phone_error %}
-                <p style="color: red; font-size: 12px; margin-top: 4px;">{{ phone_error }}</p>
-                {% endif %}
+                <input type="text" name="tel" class="contacts__form_iunput" placeholder="+7XXXXXXXXXX" required>
+                <p class="authPopup__error" style="display: none; color: red; font-size: 12px; margin-top: 4px;"></p>
             </div>
             <div class="contacts__form_checkboxBlock fic">
                 <input type="checkbox" class="contacts__form_checkbox" checked>
                 <span class="contacts__form_checkboxBlock__intro">Я согласен(а) с политикой конфидециоальности</span>
             </div>
-            <button type="submit" class="popup__btn authPopup__btn">Отправить</button>
+            <button type="submit" class="popup__btn authPopup__btn">Получить код</button>
+        </form>
+
+        <form action="/api/login/verify/" method="POST" class="authPopup__form" data-auth-step="code"
+            style="display: none;">
+            {% csrf_token %}
+            <input type="hidden" name="tel">
+            <div class="contacts__form_inputBlock">
+                <input type="text" name="code" class="contacts__form_iunput" placeholder="Код из SMS"
+                    inputmode="numeric" autocomplete="one-time-code" maxlength="10" required>
+                <p class="authPopup__error" style="display: none; color: red; font-size: 12px; margin-top: 4px;"></p>
+            </div>
+            <button type="submit" class="popup__btn authPopup__btn">Войти</button>
+            <p style="margin-top: 12px; font-size: 13px;"><a href="#" data-auth-back>Изменить номер</a></p>
         </form>
     </div>
 

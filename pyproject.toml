@@ -1,0 +1,31 @@
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["migrations", "*.md"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+# Длину строк контролирует форматтер, а не линтер.
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["api", "beautycity"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "beautycity.settings_test"
+python_files = ["test_*.py"]
+testpaths = ["api/tests"]
+addopts = "-ra"
+# WhiteNoise предупреждает об отсутствующем STATIC_ROOT: в тестах статика не собирается.
+filterwarnings = ["ignore:No directory at:UserWarning"]
+
+[tool.coverage.run]
+source = ["api"]
+omit = ["api/migrations/*", "api/tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
